@@ -1,0 +1,17 @@
+{
+  "type": "postgres",
+  "host": "localhost",
+  "port": 5432,
+  "username": "",
+  "password": "",
+  "database": "ecom",
+  "synchronize": true,
+  "entities": ["src/Entity/**/*.ts"],
+  "migrations": ["database/migrations/**/*.ts"],
+  "subscribers": ["src/subscriber/**/*.ts"],
+  "cli": {
+    "entitiesDir": "src/Entity",
+    "migrationsDir": "database/migrations",
+    "subscribersDir": "src/subscriber"
+  }
+}
