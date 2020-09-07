@@ -7,11 +7,12 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Field, ID, ObjectType } from "type-graphql";
-import { Address } from "./Address";
+
 import { UserPhoto } from "./UserPhoto";
 import { Cart } from "./Cart";
 import { Order } from "./Order";
 import { Store } from "./Store";
+import { UserAddress } from "./UserAddress";
 @ObjectType()
 @Entity()
 export class User {
@@ -42,11 +43,12 @@ export class User {
   @JoinColumn()
   user_photo: Promise<UserPhoto>;
 
-  @OneToOne(() => Address)
+  @OneToMany(() => UserAddress, (address) => address.user)
   @JoinColumn()
-  address: Promise<Address>;
+  address: Promise<UserAddress[]>;
 
   @OneToOne(() => Cart, (cart) => cart.user)
+  @JoinColumn()
   cart: Promise<Cart>;
 
   @OneToMany(() => Order, (order) => order.user)

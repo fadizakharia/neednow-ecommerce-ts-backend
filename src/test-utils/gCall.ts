@@ -13,7 +13,6 @@ export const gCall = async ({ source, variableValues, userId }: options) => {
   if (!schema) {
     schema = await createSchema();
   }
-  console.log(variableValues);
 
   return graphql({
     schema,

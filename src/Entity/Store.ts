@@ -11,6 +11,7 @@ import { User } from "./User";
 import { Product } from "./Product";
 import { StorePhoto } from "./StorePhoto";
 import { ObjectType } from "type-graphql";
+import { StoreAddress } from "./StoreAddress";
 @ObjectType()
 @Entity()
 export class Store {
@@ -32,4 +33,8 @@ export class Store {
   @OneToOne(() => StorePhoto, (storePhoto) => storePhoto.store)
   @JoinColumn()
   store_photo: Promise<StorePhoto>;
+
+  @OneToOne(() => StoreAddress, (address) => address.store)
+  @JoinColumn()
+  address: Promise<StoreAddress>;
 }

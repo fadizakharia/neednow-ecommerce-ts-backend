@@ -1,6 +1,6 @@
 import { Resolver, Mutation, Arg, Ctx, Query } from "type-graphql";
 import { RegInput } from "./signup/signup-input";
-
+import { SigninInput } from "./signin/SigninArgs";
 import { Context } from "../types/context";
 import { UserResponse } from "./signup/signup-response";
 import Argon from "argon2";
@@ -21,8 +21,10 @@ export class UserResolver {
     const emailAlreadyExists = await getRepository(User).findOne({
       where: { email: data.email },
     });
-    if (emailAlreadyExists)
+
+    if (emailAlreadyExists !== undefined) {
       return { errors: [{ field: "Email", message: "User Already Exists!" }] };
+    }
 
     const userRepository = await getRepository(User);
     const cartRepository = await getRepository(Cart);
@@ -35,9 +37,29 @@ export class UserResolver {
     const savedUser = await userRepository.save(createdUser);
     await cartRepository.save(cartForUser);
     createdUser.cart = Promise.resolve(cartForUser);
-    console.log(savedUser);
     ctx.req.session!.userId = createdUser.id;
 
     return { user: savedUser };
+  }
+  @Mutation(() => UserResponse)
+  async signin(
+    @Arg("data") data: SigninInput,
+    @Ctx() context: Context
+  ): Promise<UserResponse> {
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ where: { email: data.email } });
+    if (!user) {
+      return {
+        errors: [{ field: "signin", message: "username or password mismatch" }],
+      };
+    }
+    const valid = await Argon.verify(user.password, data.password);
+    if (!valid) {
+      return {
+        errors: [{ field: "signin", message: "username or password mismatch" }],
+      };
+    }
+    context.req.session!.id = user.id.toString();
+    return { user: user };
   }
 }

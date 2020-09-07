@@ -1,20 +1,19 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity } from "typeorm";
-import { ObjectType, Field, ID } from "type-graphql";
+import { PrimaryGeneratedColumn, Column } from "typeorm";
+import { Field, ID, InterfaceType } from "type-graphql";
 import { IsOptional } from "class-validator";
 
-@ObjectType()
-@Entity()
-export class Address extends BaseEntity {
+@InterfaceType()
+export abstract class Address {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => Number)
-  @Column("float8")
+  @Field(() => Number, { nullable: true })
+  @Column("float8", { nullable: true })
   longitude: number;
 
-  @Field(() => Number)
-  @Column("float8")
+  @Field(() => Number, { nullable: true })
+  @Column("float8", { nullable: true })
   latitude: number;
 
   @Field(() => String)
@@ -34,8 +33,8 @@ export class Address extends BaseEntity {
   @Column("text")
   address_line_1: string;
 
-  @Field(() => String)
-  @Column("text")
+  @Field(() => String, { nullable: true })
+  @Column("text", { nullable: true })
   @IsOptional()
   address_line_2: string;
 }
