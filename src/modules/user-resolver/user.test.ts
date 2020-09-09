@@ -3,7 +3,6 @@ import { Connection } from "typeorm";
 
 import { gCall } from "../../test-utils/gCall";
 import { ArgumentValidationError } from "type-graphql";
-import { UserResponse } from "./signup/signup-response";
 
 let conn: Connection;
 beforeAll(async () => {
@@ -14,30 +13,18 @@ afterAll(async () => {
 });
 const registerMutation = `mutation Register($data: RegInput!){
 signup(data:$data){
- user{
   id
   firstName
   lastName
   email
-}
-errors{
-  field
-  message
-}
 }
 }`;
 const loginMutation = `mutation Login($data: SigninInput!){
 signin(data:$data){
- user{
   id
   firstName
   lastName
   email
-}
-errors{
-  field
-  message
-}
 }
 }`;
 describe("Register", () => {
@@ -69,10 +56,11 @@ describe("Register", () => {
         },
       },
     });
-    const userResponse = result.data!.signup as UserResponse;
-    expect(userResponse.user).toBe(null);
-    expect(userResponse.errors![0].field).toBe("Email");
-    expect(userResponse.errors![0].message).toBe("User Already Exists!");
+    const validationError = result.errors![0]
+      .originalError as ArgumentValidationError;
+    expect(validationError).toBeInstanceOf(ArgumentValidationError);
+    expect(validationError.validationErrors).toHaveLength(1);
+    expect(validationError.validationErrors[0].property).toBe("email");
   });
 
   it("should not create a user if arguements are invalid", async () => {
@@ -130,12 +118,11 @@ describe("login", () => {
         },
       },
     });
-    const userResponse = result.data!.signin as UserResponse;
-    expect(userResponse.user).toBe(null);
-    expect(userResponse.errors![0].field).toBe("signin");
-    expect(userResponse.errors![0].message).toBe(
-      "username or password mismatch"
-    );
+    const validationError = result.errors![0]
+      .originalError as ArgumentValidationError;
+    expect(validationError).toBeInstanceOf(ArgumentValidationError);
+    expect(validationError.validationErrors).toHaveLength(1);
+    expect(validationError.validationErrors[0].property).toBe("password");
   });
   it("should not log in user if password is invalid", async () => {
     const result = await gCall({
@@ -147,12 +134,11 @@ describe("login", () => {
         },
       },
     });
-    const userResponse = result.data!.signin as UserResponse;
-    expect(userResponse.user).toBe(null);
-    expect(userResponse.errors![0].field).toBe("signin");
-    expect(userResponse.errors![0].message).toBe(
-      "username or password mismatch"
-    );
+    const validationError = result.errors![0]
+      .originalError as ArgumentValidationError;
+    expect(validationError).toBeInstanceOf(ArgumentValidationError);
+    expect(validationError.validationErrors).toHaveLength(1);
+    expect(validationError.validationErrors[0].property).toBe("password");
   });
   it("should login user if email and password are correct credentials", async () => {
     const result = await gCall({
@@ -165,9 +151,9 @@ describe("login", () => {
       },
     });
     expect(result.data).not.toBeNull();
-    expect(result.data!.signin.user.id).toBe("1");
-    expect(result.data!.signin.user.email).toBe("fadi@fadi.com");
-    expect(result.data!.signin.user.firstName).toBe("fadi");
-    expect(result.data!.signin.user.lastName).toBe("zakharia");
+    expect(result.data!.signin.id).toBe("1");
+    expect(result.data!.signin.email).toBe("fadi@fadi.com");
+    expect(result.data!.signin.firstName).toBe("fadi");
+    expect(result.data!.signin.lastName).toBe("zakharia");
   });
 });

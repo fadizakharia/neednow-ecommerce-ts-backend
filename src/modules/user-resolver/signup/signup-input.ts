@@ -1,11 +1,13 @@
 import { InputType, Field } from "type-graphql";
 import { User } from "../../../Entity/User";
-import { IsEmail, Length, Min } from "class-validator";
+import { IsEmail, Length, Min, Validate } from "class-validator";
+import { EmailExists } from "./EmailExistCheck";
 
 @InputType()
 export class RegInput implements Partial<User> {
   @Field(() => String)
   @IsEmail()
+  @Validate(EmailExists, { message: "Email Already Exists!" })
   email: string;
 
   @Field(() => String)

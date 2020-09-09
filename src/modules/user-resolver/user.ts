@@ -2,7 +2,6 @@ import { Resolver, Mutation, Arg, Ctx, Query } from "type-graphql";
 import { RegInput } from "./signup/signup-input";
 import { SigninInput } from "./signin/SigninArgs";
 import { Context } from "../types/context";
-import { UserResponse } from "./signup/signup-response";
 import Argon from "argon2";
 import { getRepository } from "typeorm";
 import { User } from "../../Entity/User";
@@ -13,19 +12,11 @@ export class UserResolver {
   helloworld() {
     return "hello";
   }
-  @Mutation(() => UserResponse)
+  @Mutation(() => User)
   async signup(
     @Arg("data", () => RegInput) data: RegInput,
     @Ctx() ctx: Context
-  ): Promise<UserResponse> {
-    const emailAlreadyExists = await getRepository(User).findOne({
-      where: { email: data.email },
-    });
-
-    if (emailAlreadyExists !== undefined) {
-      return { errors: [{ field: "Email", message: "User Already Exists!" }] };
-    }
-
+  ): Promise<User> {
     const userRepository = await getRepository(User);
     const cartRepository = await getRepository(Cart);
     const password = await Argon.hash(data.password);
@@ -39,27 +30,17 @@ export class UserResolver {
     createdUser.cart = Promise.resolve(cartForUser);
     ctx.req.session!.userId = createdUser.id;
 
-    return { user: savedUser };
+    return savedUser;
   }
-  @Mutation(() => UserResponse)
+  @Mutation(() => User)
   async signin(
     @Arg("data") data: SigninInput,
     @Ctx() context: Context
-  ): Promise<UserResponse> {
+  ): Promise<User> {
     const userRepository = getRepository(User);
     const user = await userRepository.findOne({ where: { email: data.email } });
-    if (!user) {
-      return {
-        errors: [{ field: "signin", message: "username or password mismatch" }],
-      };
-    }
-    const valid = await Argon.verify(user.password, data.password);
-    if (!valid) {
-      return {
-        errors: [{ field: "signin", message: "username or password mismatch" }],
-      };
-    }
-    context.req.session!.id = user.id.toString();
-    return { user: user };
+
+    context.req.session!.id = user!.id.toString();
+    return user!;
   }
 }
