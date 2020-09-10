@@ -2,7 +2,6 @@ import { testConn } from "../../test-utils/testconn";
 import { Connection } from "typeorm";
 
 import { gCall } from "../../test-utils/gCall";
-import { ArgumentValidationError } from "type-graphql";
 
 let conn: Connection;
 beforeAll(async () => {
@@ -13,18 +12,31 @@ afterAll(async () => {
 });
 const registerMutation = `mutation Register($data: RegInput!){
 signup(data:$data){
+    user{
+    id
+    firstName
+    lastName
+    email
+  }
+  errors
+  {
+    field
+    message
+  }
+}
+}`;
+const loginMutation = `mutation Login($data: SigninInput!){
+signin(data:$data){
+  user{
   id
   firstName
   lastName
   email
 }
-}`;
-const loginMutation = `mutation Login($data: SigninInput!){
-signin(data:$data){
-  id
-  firstName
-  lastName
-  email
+errors{
+  field
+  message
+}
 }
 }`;
 describe("Register", () => {
@@ -41,7 +53,9 @@ describe("Register", () => {
         },
       },
     });
-    expect(result.data).not.toBe(null);
+
+    expect(result.data!.signup.user).not.toBeNull();
+    expect(result.data!.signup.errors).toBeNull();
   });
   it("should not create a user if user already exists", async () => {
     const result = await gCall({
@@ -56,11 +70,9 @@ describe("Register", () => {
         },
       },
     });
-    const validationError = result.errors![0]
-      .originalError as ArgumentValidationError;
-    expect(validationError).toBeInstanceOf(ArgumentValidationError);
-    expect(validationError.validationErrors).toHaveLength(1);
-    expect(validationError.validationErrors[0].property).toBe("email");
+    expect(result.data!.signup.user).toBeNull();
+    const validationError = result.data!.signup.errors[0];
+    expect(validationError.field).toBe("email");
   });
 
   it("should not create a user if arguements are invalid", async () => {
@@ -77,15 +89,13 @@ describe("Register", () => {
       },
     });
 
-    expect(result.data).toBeNull();
-    expect(result.errors).toHaveLength(1);
-    const validationError = result.errors![0]
-      .originalError as ArgumentValidationError;
-    expect(validationError).toBeInstanceOf(ArgumentValidationError);
-    expect(validationError.validationErrors).toHaveLength(3);
-    expect(validationError.validationErrors[0].property).toBe("email");
-    expect(validationError.validationErrors[1].property).toBe("age");
-    expect(validationError.validationErrors[2].property).toBe("password");
+    expect(result.data!.signup.user).toBeNull();
+    const validationError = result.data!.signup.errors;
+
+    expect(validationError).toHaveLength(3);
+    expect(validationError[0].field).toBe("age");
+    expect(validationError[1].field).toBe("email");
+    expect(validationError[2].field).toBe("password");
   });
 });
 describe("login", () => {
@@ -99,14 +109,11 @@ describe("login", () => {
         },
       },
     });
-    expect(result.data).toBeNull();
-    expect(result.errors).toHaveLength(1);
-    const validationError = result.errors![0]
-      .originalError as ArgumentValidationError;
-    expect(validationError).toBeInstanceOf(ArgumentValidationError);
-    expect(validationError.validationErrors).toHaveLength(2);
-    expect(validationError.validationErrors[0].property).toBe("email");
-    expect(validationError.validationErrors[1].property).toBe("password");
+    expect(result.data!.signin.user).toBeNull();
+    const validationError = result.data!.signin.errors;
+    expect(validationError).toHaveLength(2);
+    expect(validationError[0].field).toBe("email");
+    expect(validationError[1].field).toBe("password");
   });
   it("should not log in user if email is invalid", async () => {
     const result = await gCall({
@@ -118,11 +125,10 @@ describe("login", () => {
         },
       },
     });
-    const validationError = result.errors![0]
-      .originalError as ArgumentValidationError;
-    expect(validationError).toBeInstanceOf(ArgumentValidationError);
-    expect(validationError.validationErrors).toHaveLength(1);
-    expect(validationError.validationErrors[0].property).toBe("password");
+    const validationError = result.data!.signin.errors;
+    expect(validationError).toHaveLength(2);
+    expect(validationError[0].field).toBe("email");
+    expect(validationError[1].field).toBe("password");
   });
   it("should not log in user if password is invalid", async () => {
     const result = await gCall({
@@ -134,11 +140,10 @@ describe("login", () => {
         },
       },
     });
-    const validationError = result.errors![0]
-      .originalError as ArgumentValidationError;
-    expect(validationError).toBeInstanceOf(ArgumentValidationError);
-    expect(validationError.validationErrors).toHaveLength(1);
-    expect(validationError.validationErrors[0].property).toBe("password");
+    const validationError = result.data!.signin.errors;
+    expect(validationError).toHaveLength(2);
+    expect(validationError[0].field).toBe("email");
+    expect(validationError[1].field).toBe("password");
   });
   it("should login user if email and password are correct credentials", async () => {
     const result = await gCall({
@@ -150,10 +155,10 @@ describe("login", () => {
         },
       },
     });
-    expect(result.data).not.toBeNull();
-    expect(result.data!.signin.id).toBe("1");
-    expect(result.data!.signin.email).toBe("fadi@fadi.com");
-    expect(result.data!.signin.firstName).toBe("fadi");
-    expect(result.data!.signin.lastName).toBe("zakharia");
+    expect(result.data!.signin.user).not.toBeNull();
+    expect(result.data!.signin.user.id).toBe("1");
+    expect(result.data!.signin.user.email).toBe("fadi@fadi.com");
+    expect(result.data!.signin.user.firstName).toBe("fadi");
+    expect(result.data!.signin.user.lastName).toBe("zakharia");
   });
 });
