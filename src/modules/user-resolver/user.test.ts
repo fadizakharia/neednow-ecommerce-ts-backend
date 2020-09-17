@@ -1,15 +1,9 @@
-import { testConn } from "../../test-utils/testconn";
-import { Connection } from "typeorm";
-
+import { User } from "../../Entity/User";
+import { getRepository } from "typeorm";
+// import { testConn } from "../../test-utils/testconn";
 import { gCall } from "../../test-utils/gCall";
+// import { Connection } from "typeorm";
 
-let conn: Connection;
-beforeAll(async () => {
-  conn = await testConn(true);
-});
-afterAll(async () => {
-  await conn!.close();
-});
 const registerMutation = `mutation Register($data: RegInput!){
 signup(data:$data){
     user{
@@ -39,6 +33,13 @@ errors{
 }
 }
 }`;
+afterAll(async () => {
+  const user = getRepository(User);
+  const currentTestUser = await user.findOne({ where: { id: 2 } });
+  if (currentTestUser) {
+    await user.remove(currentTestUser);
+  }
+});
 describe("Register", () => {
   it("should create a user if arguements are valid", async () => {
     const result = await gCall({
@@ -156,7 +157,7 @@ describe("login", () => {
       },
     });
     expect(result.data!.signin.user).not.toBeNull();
-    expect(result.data!.signin.user.id).toBe("1");
+    expect(result.data!.signin.user.id).toBe("2");
     expect(result.data!.signin.user.email).toBe("fadi@fadi.com");
     expect(result.data!.signin.user.firstName).toBe("fadi");
     expect(result.data!.signin.user.lastName).toBe("zakharia");

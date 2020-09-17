@@ -4,7 +4,7 @@ import {
   OneToOne,
   Entity,
   OneToMany,
-  JoinColumn,
+  // JoinColumn,
 } from "typeorm";
 import { Field, ID, ObjectType } from "type-graphql";
 
@@ -40,20 +40,17 @@ export class User {
   password: string;
 
   @OneToOne(() => UserPhoto, (uphoto) => uphoto.user)
-  @JoinColumn()
-  user_photo: Promise<UserPhoto>;
+  user_photo: UserPhoto;
 
   @OneToMany(() => UserAddress, (address) => address.user)
-  @JoinColumn()
-  address: Promise<UserAddress[]>;
+  address: Array<UserAddress>;
 
   @OneToOne(() => Cart, (cart) => cart.user)
-  @JoinColumn()
-  cart: Promise<Cart>;
+  cart: Cart;
 
   @OneToMany(() => Order, (order) => order.user)
-  order: Promise<Order[]>;
+  order: Array<Order>;
 
   @OneToMany(() => Store, (store) => store.user)
-  store: Promise<Store[]>;
+  store: Array<Store>;
 }

@@ -17,10 +17,10 @@ export class Cart {
   id: number;
 
   @OneToMany(() => CartProduct, (cprod) => cprod.cart, { nullable: true })
-  cart_product: Promise<CartProduct[]>;
+  cart_product: Array<CartProduct>;
 
   @OneToOne(() => User, (user) => user.cart)
-  user: Promise<User>;
+  user: User;
   @Field(() => Int, { nullable: true })
   @Column("float8", { nullable: true })
   total: number;

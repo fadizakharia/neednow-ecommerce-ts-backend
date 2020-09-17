@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Arg, Ctx, Query } from "type-graphql";
+import { Resolver, Mutation, Arg, Ctx, Query, Authorized } from "type-graphql";
 import { RegInput } from "./signup/signup-input";
 import { SigninInput } from "./signin/SigninArgs";
 import { Context } from "../types/context";
@@ -33,8 +33,8 @@ export class UserResolver {
     if (error.length > 0) {
       return { errors: error };
     }
-    const userRepository = await getRepository(User);
-    const cartRepository = await getRepository(Cart);
+    const userRepository = getRepository(User);
+    const cartRepository = getRepository(Cart);
     const userExists = await userRepository.findOne({
       where: { email: data.email },
     });
@@ -45,14 +45,14 @@ export class UserResolver {
     }
     const password = await Argon.hash(data.password);
 
-    const createdUser = await userRepository.create({ ...data, password });
-    const cartForUser = await cartRepository.create({
-      user: Promise.resolve(createdUser),
+    const createdUser = userRepository.create({ ...data, password });
+    const cartForUser = cartRepository.create({
+      user: createdUser,
     });
 
     const savedUser = await userRepository.save(createdUser);
     await cartRepository.save(cartForUser);
-    createdUser.cart = Promise.resolve(cartForUser);
+    createdUser.cart = cartForUser;
     ctx.req.session!.userId = createdUser.id;
 
     return { user: savedUser };
@@ -89,15 +89,22 @@ export class UserResolver {
         ],
       };
     }
-    context.req.session!.id = user!.id.toString();
+    context.req.session!.userId = user!.id.toString();
+
     return { user };
   }
-  // @Mutation()
-  // logout(@Ctx() context: Context): void {
-  //   context.req.session?.destroy((err) => {
-  //     if (err) {
-  //       throw err;
-  //     }
-  //   });
-  // }
+  @Authorized()
+  @Mutation()
+  logout(@Ctx() context: Context): boolean {
+    context.req.session?.destroy((err) => {
+      if (err) {
+        throw err;
+      }
+    });
+    if (context.req.session?.userId) {
+      return false;
+    } else {
+      return true;
+    }
+  }
 }

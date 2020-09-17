@@ -5,36 +5,35 @@ import {
   OneToMany,
   OneToOne,
   Entity,
-  JoinColumn,
+  // JoinColumn,
 } from "typeorm";
 import { User } from "./User";
 import { Product } from "./Product";
 import { StorePhoto } from "./StorePhoto";
-import { ObjectType } from "type-graphql";
+import { Field, ID, ObjectType } from "type-graphql";
 import { StoreAddress } from "./StoreAddress";
 @ObjectType()
 @Entity()
 export class Store {
+  @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number;
-
+  @Field(() => String)
   @Column("text")
-  store_name: string;
-
+  storeName: string;
+  @Field(() => String)
   @Column("text")
-  store_description: string;
-
+  storeDescription: string;
+  @Field(() => User)
   @ManyToOne(() => User, (user) => user.store)
-  user: Promise<User>;
+  user: User;
 
   @OneToMany(() => Product, (product) => product.store)
-  product: Promise<Product[]>;
+  product: Product[];
 
   @OneToOne(() => StorePhoto, (storePhoto) => storePhoto.store)
-  @JoinColumn()
-  store_photo: Promise<StorePhoto>;
+  storePhoto: StorePhoto;
 
   @OneToOne(() => StoreAddress, (address) => address.store)
-  @JoinColumn()
-  address: Promise<StoreAddress>;
+  address: StoreAddress;
 }

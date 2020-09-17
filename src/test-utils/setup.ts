@@ -1,3 +1,3 @@
 import { testConn } from "./testconn";
 
-testConn(false).then(process.exit());
+testConn(true).then(process.exit());
