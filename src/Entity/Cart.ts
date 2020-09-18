@@ -5,7 +5,7 @@ import {
   OneToOne,
   Entity,
 } from "typeorm";
-import { CartProduct } from "./CartProduct";
+import { ItemProduct } from "./ItemProduct";
 import { User } from "./User";
 import { ObjectType, Field, Int, ID } from "type-graphql";
 // import { Consumer } from "./Consumer";
@@ -16,8 +16,8 @@ export class Cart {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToMany(() => CartProduct, (cprod) => cprod.cart, { nullable: true })
-  cart_product: Array<CartProduct>;
+  @OneToMany(() => ItemProduct, (cprod) => cprod.cart, { nullable: true })
+  cart_product: Array<ItemProduct>;
 
   @OneToOne(() => User, (user) => user.cart)
   user: User;

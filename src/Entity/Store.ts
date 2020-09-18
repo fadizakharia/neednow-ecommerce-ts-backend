@@ -5,13 +5,14 @@ import {
   OneToMany,
   OneToOne,
   Entity,
-  // JoinColumn,
+  JoinColumn,
 } from "typeorm";
 import { User } from "./User";
 import { Product } from "./Product";
 import { StorePhoto } from "./StorePhoto";
 import { Field, ID, ObjectType } from "type-graphql";
 import { StoreAddress } from "./StoreAddress";
+import { StoreOrder } from "./storeOrder";
 @ObjectType()
 @Entity()
 export class Store {
@@ -32,8 +33,13 @@ export class Store {
   product: Product[];
 
   @OneToOne(() => StorePhoto, (storePhoto) => storePhoto.store)
+  @JoinColumn()
   storePhoto: StorePhoto;
 
+  @OneToMany(() => StoreOrder, (order) => order.store)
+  order: Array<StoreOrder>;
+
   @OneToOne(() => StoreAddress, (address) => address.store)
+  @JoinColumn()
   address: StoreAddress;
 }

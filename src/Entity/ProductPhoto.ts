@@ -6,5 +6,5 @@ import { ObjectType } from "type-graphql";
 @Entity()
 export class ProductPhoto extends Photo {
   @ManyToOne(() => Product, (product) => product.photos)
-  product: Promise<Product>;
+  product: Product;
 }

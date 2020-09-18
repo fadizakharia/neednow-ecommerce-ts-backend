@@ -7,5 +7,5 @@ import { ObjectType } from "type-graphql";
 @Entity()
 export class ReportStore extends Report {
   @OneToMany(() => Store, (store) => store.id)
-  user: Promise<Store>;
+  user: Store;
 }
