@@ -29,8 +29,8 @@ export class Product {
   @Column("text")
   description: string;
 
-  @Field(() => Number)
-  @Column("float4")
+  @Field(() => Number, { nullable: true })
+  @Column("float4", { nullable: true })
   rating: number;
 
   @Field(() => Int)
@@ -40,6 +40,7 @@ export class Product {
   @OneToMany(() => ProductPhoto, (productPhoto) => productPhoto.product)
   photos: Array<ProductPhoto>;
 
+  @Field(() => Store)
   @ManyToOne(() => Store, (store) => store.product)
   store: Store;
 

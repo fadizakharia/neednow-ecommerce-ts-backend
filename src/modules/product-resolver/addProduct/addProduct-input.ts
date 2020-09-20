@@ -11,6 +11,9 @@ export class AddProductInput {
   @Field(() => String)
   description: string;
 
+  @Field(() => Number)
+  stock: number;
+
   @Field(() => ID)
   storeId: number;
 }

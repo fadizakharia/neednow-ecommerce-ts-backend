@@ -2,6 +2,7 @@ import { Store } from "../../Entity/Store";
 import { getRepository } from "typeorm";
 // import { testConn } from "../../test-utils/testconn";
 import { gCall } from "../../test-utils/gCall";
+import { createStore, signup } from "../../test-utils/sharedTest";
 // import { UnauthorizedError } from "type-graphql";
 // import { Connection } from "typeorm";
 
@@ -24,26 +25,25 @@ const addStoreSchema = `mutation addStore($args: AddStoreInput!){
   }
   }
 }`;
-beforeEach(async () => {
+const removeStores = async () => {
   const store = getRepository(Store);
   const allStores = store.find();
   (await allStores).forEach(async (s) => {
     await store.remove(s);
   });
+};
+beforeAll(async () => {
+  await signup();
+});
+beforeEach(async () => {
+  await removeStores();
+});
+afterAll(async () => {
+  await removeStores();
 });
 describe("store", () => {
   it("should add store if user is logged in", async () => {
-    const result = await gCall({
-      source: addStoreSchema,
-      variableValues: {
-        args: {
-          storeName: "the testing store",
-          storeDescription:
-            "store made by john doe and jane doe sells tests to everyone",
-        },
-      },
-      userId: 1,
-    });
+    const result = await createStore();
     const resData = result.data!.addStore.store;
     expect(resData.storeName).toEqual("the testing store");
     expect(resData.storeDescription).toEqual(

@@ -7,7 +7,7 @@ import { Context } from "../types/context";
 import { addProductSchema } from "./addProduct/addProduct-validation";
 import { ValidationError } from "yup";
 import { Store } from "../../Entity/Store";
-import { ProductsResponse } from "./response/productsResponse";
+// import { ProductsResponse } from "./response/productsResponse";
 @Resolver()
 export class ProductResolver {
   @Query(() => ProductResponse)
@@ -21,25 +21,24 @@ export class ProductResolver {
     }
     return { product: foundProduct };
   }
-  @Query(() => ProductsResponse)
-  async getProducts(
-    @Arg("productId") storeId: string
-  ): Promise<ProductsResponse> {
-    const store = getRepository(Store);
-    const foundStore = await store.findOne({ where: { id: storeId } });
-    if (!foundStore) {
-      return { errors: [{ field: "store", message: "Store does not exist" }] };
-    }
-    return { products: foundStore.product };
-  }
-  @Authorized()
-  @Mutation()
+  // @Query(() => ProductsResponse)
+  // async getProducts(
+  //   @Arg("productId") storeId: string
+  // ): Promise<ProductsResponse> {
+  //   const store = getRepository(Store);
+  //   const foundStore = await store.findOne({ where: { id: storeId } });
+  //   if (!foundStore) {
+  //     return { errors: [{ field: "store", message: "Store does not exist" }] };
+  //   }
+  //   return { products: foundStore.product };
+  // }
+  @Authorized("authorized")
+  @Mutation(() => ProductResponse)
   async addProduct(
     @Arg("args") args: AddProductInput,
     @Ctx() context: Context
   ): Promise<ProductResponse> {
     const userId = context.req.session!.userId;
-    // console.log(userId);
 
     const error: { field: string; message: string }[] = [];
     await addProductSchema
@@ -53,10 +52,14 @@ export class ProductResolver {
       return { errors: error };
     }
     const store = getRepository(Store);
-    const foundStore = await store.findOne({ where: { id: args.storeId } });
+    const foundStore = await store.findOne({
+      where: { id: args.storeId },
+      relations: ["user", "product"],
+    });
     if (!foundStore) {
       return { errors: [{ field: "store", message: "store does not exist!" }] };
     }
+
     if (foundStore.user.id !== userId) {
       return {
         errors: [
@@ -70,8 +73,9 @@ export class ProductResolver {
     const product = getRepository(Product);
     const createdProduct = product.create({ ...args, store: foundStore });
     foundStore.product.push(createdProduct);
-    const savedProduct = await product.save(createdProduct);
     await store.save(foundStore);
+    const savedProduct = await product.save(createdProduct);
+
     return { product: savedProduct };
   }
 }

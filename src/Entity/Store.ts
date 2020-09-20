@@ -30,6 +30,7 @@ export class Store {
   user: User;
 
   @OneToMany(() => Product, (product) => product.store)
+  @JoinColumn()
   product: Product[];
 
   @OneToOne(() => StorePhoto, (storePhoto) => storePhoto.store)
