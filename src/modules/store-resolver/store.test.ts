@@ -25,6 +25,32 @@ const addStoreSchema = `mutation addStore($args: AddStoreInput!){
   }
   }
 }`;
+const getStoreSchema = `query getStore($storeId:Float!){
+  getStore(storeId:$storeId){
+   store{
+     id
+     storeName
+     storeDescription
+     product{
+       id
+       name
+       price
+     }
+     user{
+       id
+       firstName
+       lastName
+     }     
+  }
+  errors{
+    field
+    message
+  }
+  }
+}`;
+const deleteStoreSchema = `mutation deleteStore($storeId:Float!){
+  deleteStore(storeId:$storeId)
+}`;
 const removeStores = async () => {
   const store = getRepository(Store);
   const allStores = store.find();
@@ -35,9 +61,7 @@ const removeStores = async () => {
 beforeAll(async () => {
   await signup();
 });
-beforeEach(async () => {
-  await removeStores();
-});
+
 afterAll(async () => {
   await removeStores();
 });
@@ -81,5 +105,47 @@ describe("store", () => {
     expect(result.data!.addStore.errors).toHaveLength(2);
     expect(result.data!.addStore.errors[0].field).toEqual("storeName");
     expect(result.data!.addStore.errors[1].field).toEqual("storeDescription");
+  });
+});
+describe("fetching store", () => {
+  it("should get single store by id", async () => {
+    const result = await gCall({
+      source: getStoreSchema,
+      variableValues: { storeId: 1 },
+      userId: 1,
+    });
+    expect(result.data!.getStore.store).not.toBeNull();
+  });
+});
+
+describe("delete store", () => {
+  it("should not delete store if the user is not authorized", async () => {
+    const result = await gCall({
+      source: deleteStoreSchema,
+      variableValues: { storeId: 1 },
+    });
+    console.log(result.errors![0].message);
+
+    expect(result.errors![0].message).toEqual(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+  });
+  it("should not delete store if the user does not own the store", async () => {
+    const result = await gCall({
+      source: deleteStoreSchema,
+      variableValues: { storeId: 1 },
+      userId: 2,
+    });
+
+    expect(result.data!.deleteStore).toEqual(false);
+  });
+  it("should delete store if the user owns the store", async () => {
+    const result = await gCall({
+      source: deleteStoreSchema,
+      variableValues: { storeId: 1 },
+      userId: 1,
+    });
+
+    expect(result.data!.deleteStore).toEqual(true);
   });
 });

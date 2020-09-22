@@ -10,7 +10,7 @@ export const testConn = (drop: boolean = false) => {
     database: "ecom-test",
     synchronize: drop,
     dropSchema: drop,
-    entities: [__dirname + "/../Entity/**/*.ts"],
+    entities: [__dirname + "/../Entity/*.ts"],
     migrations: [__dirname + "/../migrations/**/*.ts"],
     subscribers: [__dirname + "/../subscriber/**/*.ts"],
   });

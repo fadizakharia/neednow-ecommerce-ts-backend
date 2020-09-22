@@ -28,7 +28,7 @@ export class Store {
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.store)
   user: User;
-
+  @Field(() => [Product])
   @OneToMany(() => Product, (product) => product.store)
   @JoinColumn()
   product: Product[];

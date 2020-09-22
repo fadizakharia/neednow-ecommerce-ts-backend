@@ -12,9 +12,13 @@ import { registrationSchema } from "./signup/signupValidatorSchema";
 import { ValidationError } from "yup";
 @Resolver()
 export class UserResolver {
-  @Query(() => String)
-  helloworld() {
-    return "hello";
+  @Authorized()
+  @Query(() => User)
+  async currentUser(@Ctx() ctx: Context): Promise<User> {
+    const userId = ctx.req.session!.userId;
+    const user = getRepository(User);
+    const currentUser = await user.findOne({ where: { id: userId } });
+    return currentUser!;
   }
   @Mutation(() => UserResponse)
   async signup(
@@ -96,11 +100,16 @@ export class UserResolver {
   @Authorized()
   @Mutation()
   logout(@Ctx() context: Context): boolean {
-    context.req.session?.destroy((err) => {
-      if (err) {
-        throw err;
-      }
-    });
+    if (!context.req.session?.destroy) {
+      context.req.session!.userId = undefined;
+    } else {
+      context.req.session.destroy((err) => {
+        if (err) {
+          throw err;
+        }
+      });
+    }
+    console.log(context.req.session);
     if (context.req.session?.userId) {
       return false;
     } else {

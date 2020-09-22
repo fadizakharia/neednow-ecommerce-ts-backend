@@ -7,7 +7,7 @@ import { Context } from "../types/context";
 import { addProductSchema } from "./addProduct/addProduct-validation";
 import { ValidationError } from "yup";
 import { Store } from "../../Entity/Store";
-// import { ProductsResponse } from "./response/productsResponse";
+import { ProductsResponse } from "./response/productsResponse";
 @Resolver()
 export class ProductResolver {
   @Query(() => ProductResponse)
@@ -21,17 +21,17 @@ export class ProductResolver {
     }
     return { product: foundProduct };
   }
-  // @Query(() => ProductsResponse)
-  // async getProducts(
-  //   @Arg("productId") storeId: string
-  // ): Promise<ProductsResponse> {
-  //   const store = getRepository(Store);
-  //   const foundStore = await store.findOne({ where: { id: storeId } });
-  //   if (!foundStore) {
-  //     return { errors: [{ field: "store", message: "Store does not exist" }] };
-  //   }
-  //   return { products: foundStore.product };
-  // }
+  @Query(() => ProductsResponse)
+  async getProducts(
+    @Arg("productId") storeId: string
+  ): Promise<ProductsResponse> {
+    const store = getRepository(Store);
+    const foundStore = await store.findOne({ where: { id: storeId } });
+    if (!foundStore) {
+      return { errors: [{ field: "store", message: "Store does not exist" }] };
+    }
+    return { products: foundStore.product };
+  }
   @Authorized("authorized")
   @Mutation(() => ProductResponse)
   async addProduct(

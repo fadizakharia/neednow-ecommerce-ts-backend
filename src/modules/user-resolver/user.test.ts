@@ -18,6 +18,13 @@ signup(data:$data){
   }
 }
 }`;
+const currentUser = `query currentUser{
+  currentUser{
+    id
+    firstName
+    lastName
+  }
+}`;
 const loginMutation = `mutation Login($data: SigninInput!){
 signin(data:$data){
   user{
@@ -31,6 +38,9 @@ errors{
   message
 }
 }
+}`;
+const logoutMutation = `mutation logout{
+  logout
 }`;
 afterAll(async () => {
   await clearUsers();
@@ -125,5 +135,23 @@ describe("login", () => {
     expect(result.data!.signin.user.email).toBe("test@test.com");
     expect(result.data!.signin.user.firstName).toBe("test");
     expect(result.data!.signin.user.lastName).toBe("tester");
+  });
+});
+describe("currentUser", () => {
+  it("should return current user if user is logged in", async () => {
+    const result = await gCall({ source: currentUser, userId: 1 });
+    expect(result.data!.currentUser.id).toBe("1");
+  });
+  it("should not return current user if user is not logged in", async () => {
+    const result = await gCall({ source: currentUser });
+    expect(result.errors![0].message).toBe(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+  });
+});
+describe("logout", () => {
+  it("should logout user if user is logged in", async () => {
+    const result = await gCall({ source: logoutMutation, userId: 1 });
+    expect(result.data!.logout).toBe(true);
   });
 });

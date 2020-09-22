@@ -11,10 +11,11 @@ import { StoresResponse } from "./response/StoresResponse";
 @Resolver()
 export class StoreResolver {
   @Query(() => StoreResponse)
-  async getStore(@Arg("storeId") storeId: string): Promise<StoreResponse> {
+  async getStore(@Arg("storeId") storeId: number): Promise<StoreResponse> {
     const storeRepository = getRepository(Store);
     const store = await storeRepository.findOne({
       where: { id: storeId },
+      relations: ["user", "product"],
     });
     if (!store) {
       return { errors: [{ field: "store", message: "store does not exist!" }] };
@@ -78,5 +79,26 @@ export class StoreResolver {
         errors: [{ field: "system error", message: "Something went wrong!" }],
       };
     }
+  }
+  @Authorized()
+  @Mutation(() => Boolean)
+  async deleteStore(
+    @Ctx() ctx: Context,
+    @Arg("storeId") storeId: number
+  ): Promise<boolean> {
+    const userId = ctx.req.session!.userId;
+    const storeRepository = getRepository(Store);
+
+    const store = await storeRepository.findOne({
+      where: { id: storeId },
+      relations: ["user"],
+    });
+    if (store) {
+      if (store.user.id === userId) {
+        await storeRepository.delete(store);
+        return true;
+      }
+    }
+    return false;
   }
 }
