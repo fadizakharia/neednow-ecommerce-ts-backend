@@ -19,7 +19,7 @@ export class cartResolver {
     const userRepository = getRepository(User);
     const currentUser = await userRepository.findOne({
       where: { id: userId },
-      relations: ["cart.cart_product"],
+      relations: ["cart"],
     });
     if (currentUser?.cart) {
       return { cart: currentUser.cart };
@@ -54,26 +54,58 @@ export class cartResolver {
     const currentProduct = await productRepository.findOne({
       where: { id: args.productId },
     });
-    const currentUser = await userRepository.findOne({ where: { id: userId } });
-    const userCart = await cartRepository.findOne({
-      where: { user: currentUser },
-      relations: ["cart_product"],
+    const currentUser = await userRepository.findOne({
+      where: { id: userId },
     });
+    let userCart = (await cartRepository.findOne({
+      where: { user: currentUser },
+      relations: ["user"],
+    })) as Cart;
 
-    if (currentProduct && userCart) {
-      if (userCart?.total) {
-        userCart.total = userCart.total + args.Quantity * currentProduct.price;
-      }
-      userCart!.total = args.Quantity + currentProduct.price;
-      const createdItem = itemProductRepository.create({
-        quantity: args.Quantity,
-        price: currentProduct.price * args.Quantity,
-        product: currentProduct,
-        cart: userCart,
+    // console.log(userCart);
+
+    if (currentProduct) {
+      let createdItem: ItemProduct | undefined;
+      createdItem = await itemProductRepository.findOne({
+        where: { cart: userCart, product: currentProduct },
       });
-      const savedItem = await itemProductRepository.save(createdItem);
-      userCart.cart_product.push(savedItem);
-      const savedCart = await cartRepository.save(userCart);
+      if (createdItem) {
+        createdItem.quantity = createdItem.quantity + args.quantity;
+        createdItem.price = +(
+          createdItem.price +
+          args.quantity * currentProduct.price
+        ).toFixed(2);
+      } else {
+        createdItem = itemProductRepository.create({
+          quantity: args.quantity,
+          price: +(currentProduct.price * args.quantity).toFixed(2),
+          product: currentProduct,
+        });
+        userCart.item_product.push(createdItem);
+        createdItem.cart = userCart;
+      }
+      if (currentProduct.stock < createdItem.quantity) {
+        return {
+          errors: [
+            {
+              field: "quantity",
+              message: "requested quantity exceeds current stock of product",
+            },
+          ],
+        };
+      }
+      // console.log(createdItem);
+      userCart.total = +(
+        userCart.total +
+        args.quantity * currentProduct.price
+      ).toFixed(2);
+
+      await cartRepository.save(userCart);
+      await itemProductRepository.save(createdItem);
+      const savedCart = await cartRepository.findOne({
+        where: { user: currentUser },
+        relations: ["user"],
+      });
       return { cart: savedCart };
     }
     return {

@@ -49,7 +49,6 @@ export class User {
   address: UserAddress;
 
   @OneToOne(() => Cart, (cart) => cart.user)
-  @JoinColumn()
   cart: Cart;
 
   @OneToOne(() => StoreOrder, (storeOrder) => storeOrder.customer)

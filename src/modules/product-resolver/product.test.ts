@@ -1,19 +1,11 @@
 import { createStore, signup, signupRandom } from "../../test-utils/sharedTest";
 import { gCall } from "../../test-utils/gCall";
-import { getRepository } from "typeorm";
-import { Product } from "../../Entity/Product";
 
 beforeAll(async () => {
   await signup();
   await createStore();
 });
-afterAll(async () => {
-  const productRepository = getRepository(Product);
-  const result = await productRepository.find();
-  result.forEach(async (prod) => {
-    await productRepository.delete(prod);
-  });
-});
+
 const addProductSchema = `mutation addProduct($args: AddProductInput!){
   addProduct(args:$args){
     product{
@@ -43,6 +35,7 @@ describe("testing for adding product", () => {
       },
       userId: 1,
     });
+
     expect(result.data!.addProduct.product.id).toBe("1");
     expect(result.data!.addProduct.product.store.id).toBe("1");
   });
@@ -61,6 +54,7 @@ describe("testing for adding product", () => {
       },
       userId: 2,
     });
+
     expect(result.data!.addProduct.errors[0].field).toBe("authorization");
   });
   it("should not be able to add product if no user is logged in", async () => {

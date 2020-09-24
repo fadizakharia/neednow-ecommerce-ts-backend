@@ -1,10 +1,5 @@
-import { Store } from "../../Entity/Store";
-import { getRepository } from "typeorm";
-// import { testConn } from "../../test-utils/testconn";
 import { gCall } from "../../test-utils/gCall";
 import { createStore, signup } from "../../test-utils/sharedTest";
-// import { UnauthorizedError } from "type-graphql";
-// import { Connection } from "typeorm";
 
 const addStoreSchema = `mutation addStore($args: AddStoreInput!){
   addStore(args:$args){
@@ -51,20 +46,11 @@ const getStoreSchema = `query getStore($storeId:Float!){
 const deleteStoreSchema = `mutation deleteStore($storeId:Float!){
   deleteStore(storeId:$storeId)
 }`;
-const removeStores = async () => {
-  const store = getRepository(Store);
-  const allStores = store.find();
-  (await allStores).forEach(async (s) => {
-    await store.remove(s);
-  });
-};
+
 beforeAll(async () => {
   await signup();
 });
 
-afterAll(async () => {
-  await removeStores();
-});
 describe("store", () => {
   it("should add store if user is logged in", async () => {
     const result = await createStore();
@@ -124,7 +110,6 @@ describe("delete store", () => {
       source: deleteStoreSchema,
       variableValues: { storeId: 1 },
     });
-    console.log(result.errors![0].message);
 
     expect(result.errors![0].message).toEqual(
       "Access denied! You need to be authorized to perform this action!"

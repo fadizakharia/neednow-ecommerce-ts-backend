@@ -1,7 +1,5 @@
-// import { testConn } from "../../test-utils/testconn";
 import { gCall } from "../../test-utils/gCall";
-import { clearUsers, signin, signup } from "../../test-utils/sharedTest";
-// import { Connection } from "typeorm";
+import { signin, signup } from "../../test-utils/sharedTest";
 
 const registerMutation = `mutation Register($data: RegInput!){
 signup(data:$data){
@@ -42,9 +40,7 @@ errors{
 const logoutMutation = `mutation logout{
   logout
 }`;
-afterAll(async () => {
-  await clearUsers();
-});
+
 describe("Register", () => {
   it("should create a user if arguements are valid", async () => {
     const result = await signup();

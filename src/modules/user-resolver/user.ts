@@ -50,13 +50,12 @@ export class UserResolver {
     const password = await Argon.hash(data.password);
 
     const createdUser = userRepository.create({ ...data, password });
-    const cartForUser = cartRepository.create({
-      user: createdUser,
-    });
 
     const savedUser = await userRepository.save(createdUser);
+    const cartForUser = cartRepository.create({
+      user: savedUser,
+    });
     await cartRepository.save(cartForUser);
-    createdUser.cart = cartForUser;
     ctx.req.session!.userId = createdUser.id;
 
     return { user: savedUser };
@@ -109,7 +108,7 @@ export class UserResolver {
         }
       });
     }
-    console.log(context.req.session);
+
     if (context.req.session?.userId) {
       return false;
     } else {

@@ -4,6 +4,7 @@ import {
   Entity,
   OneToOne,
   Column,
+  JoinColumn,
 } from "typeorm";
 import { Cart } from "./Cart";
 import { Product } from "./Product";
@@ -18,7 +19,7 @@ export class ItemProduct {
   id: number;
 
   @Field(() => Cart)
-  @ManyToOne(() => Cart, (cart) => cart.cart_product)
+  @ManyToOne(() => Cart, (cart) => cart.item_product)
   cart: Cart;
 
   @Field(() => Number)
@@ -26,11 +27,12 @@ export class ItemProduct {
   quantity: number;
 
   @Field(() => Number)
-  @Column("float8")
+  @Column("float4")
   price: number;
 
   @Field(() => Product)
-  @OneToOne(() => Product, (product) => product.cart_product)
+  @OneToOne(() => Product, (product) => product.cart_product, { eager: true })
+  @JoinColumn()
   product: Product;
   @ManyToOne(() => StoreOrder, (sorder) => sorder.itemProduct)
   storeOrder: StoreOrder;

@@ -5,6 +5,7 @@ let conn: Connection;
 beforeAll(async () => {
   conn = await testConn(true);
 });
+
 afterAll(async () => {
   if (conn) {
     await conn.close();

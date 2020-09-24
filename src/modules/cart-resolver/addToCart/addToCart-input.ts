@@ -5,5 +5,5 @@ export class AddToCartInput {
   @Field(() => Number)
   productId: number;
   @Field(() => Number)
-  Quantity: number;
+  quantity: number;
 }

@@ -4,10 +4,11 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   Entity,
+  JoinColumn,
 } from "typeorm";
 import { ItemProduct } from "./ItemProduct";
 import { User } from "./User";
-import { ObjectType, Field, Int, ID } from "type-graphql";
+import { ObjectType, Field, ID } from "type-graphql";
 // import { Consumer } from "./Consumer";
 @ObjectType()
 @Entity()
@@ -15,13 +16,17 @@ export class Cart {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number;
-
-  @OneToMany(() => ItemProduct, (cprod) => cprod.cart, { nullable: true })
-  cart_product: Array<ItemProduct>;
-
-  @OneToOne(() => User, (user) => user.cart)
+  @Field(() => [ItemProduct])
+  @OneToMany(() => ItemProduct, (cprod) => cprod.cart, { eager: true })
+  item_product: Array<ItemProduct>;
+  @Field(() => User)
+  @OneToOne(() => User, (user) => user.cart, {
+    cascade: ["remove", "insert", "update"],
+    onDelete: "CASCADE",
+  })
+  @JoinColumn()
   user: User;
-  @Field(() => Int, { nullable: true })
-  @Column("float8", { nullable: true })
+  @Field(() => Number, { nullable: true })
+  @Column("float4", { default: 0 })
   total: number;
 }

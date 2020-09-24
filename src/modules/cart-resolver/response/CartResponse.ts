@@ -6,6 +6,6 @@ import { FieldError } from "../../../util/FieldError";
 export class CartResponse {
   @Field(() => Cart, { nullable: true })
   cart?: Cart;
-  @Field(() => [FieldError])
+  @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
 }
