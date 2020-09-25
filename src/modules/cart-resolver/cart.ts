@@ -21,7 +21,7 @@ export class cartResolver {
     const userRepository = getRepository(User);
     const currentUser = await userRepository.findOne({
       where: { id: userId },
-      relations: ["cart"],
+      relations: ["cart", "cart.item_product", "cart.item_product.product"],
     });
     if (currentUser?.cart) {
       return { cart: currentUser.cart };
@@ -134,6 +134,7 @@ export class cartResolver {
     }
     const user = getRepository(User);
     const itemProduct = getRepository(ItemProduct);
+    const cart = getRepository(Cart);
     const currentItem = await itemProduct.findOne({
       where: { id: args.itemProductId },
       relations: ["cart"],
@@ -155,6 +156,12 @@ export class cartResolver {
         };
       }
       await itemProduct.delete(currentItem);
+      const UserCart = (await user.findOne({
+        where: { id: userId },
+        relations: ["cart", "cart.item_product", "cart.user"],
+      }))!.cart;
+      UserCart.total = +(UserCart.total - currentItem.price).toFixed(2);
+      await cart.save(UserCart);
       const updatedUserCart = (await user.findOne({
         where: { id: userId },
         relations: ["cart", "cart.item_product", "cart.user"],

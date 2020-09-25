@@ -1,6 +1,22 @@
 import { gCall } from "../../test-utils/gCall";
 import { createStore, signup, signupRandom } from "../../test-utils/sharedTest";
-
+const getCartSchema = `query getCart{
+  getCart{
+    cart{
+      id
+      total
+      item_product{
+        id
+        price
+        quantity
+        product{
+          name
+          description
+        }
+      }
+    }
+  }
+}`;
 const addToCartSchema = `mutation addToCart($args:AddToCartInput!){
   addToCart(args:$args){
     cart{
@@ -202,6 +218,16 @@ describe("deleting items from cart", () => {
   });
 });
 describe("getting user cart", () => {
-  it("should not fetch user cart if user is unauthorized", () => {});
-  it("should get the current user cart", () => {});
+  it("should not fetch user cart if user is unauthorized", async () => {
+    const result = await gCall({ source: getCartSchema });
+    expect(result.errors![0].message).toBe(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+  });
+  it("should get the current user cart", async () => {
+    const result = await gCall({ source: getCartSchema, userId: 2 });
+    console.log(result.data!.getCart.cart);
+
+    expect(result.data!.getCart.cart).not.toBeNull();
+  });
 });
