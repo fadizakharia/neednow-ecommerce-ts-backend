@@ -8,6 +8,8 @@ import { User } from "../../Entity/User";
 import { Context } from "../types/context";
 import { AddToCartInput } from "./addToCart/addToCart-input";
 import { AddToCartValidation } from "./addToCart/addToCart-validation";
+import { DeleteFromCartInput } from "./deleteFromCart/deleteFromCart-input";
+import { deleteFromCartSchema } from "./deleteFromCart/deleteFromCart-validation";
 import { CartResponse } from "./response/CartResponse";
 
 @Resolver()
@@ -111,5 +113,59 @@ export class cartResolver {
     return {
       errors: [{ field: "product", message: "product does not exist" }],
     };
+  }
+  @Authorized()
+  @Mutation(() => CartResponse)
+  async deleteFromCart(
+    @Ctx() ctx: Context,
+    @Arg("args") args: DeleteFromCartInput
+  ): Promise<CartResponse> {
+    const userId = ctx.req.session!.userId;
+    const errors: { field: string; message: string }[] = [];
+    await deleteFromCartSchema
+      .validate({ ...args })
+      .catch(function (err: ValidationError) {
+        err.inner.forEach((e) => {
+          errors.push({ field: e.path, message: e.message });
+        });
+      });
+    if (errors.length > 0) {
+      return { errors };
+    }
+    const user = getRepository(User);
+    const itemProduct = getRepository(ItemProduct);
+    const currentItem = await itemProduct.findOne({
+      where: { id: args.itemProductId },
+      relations: ["cart"],
+    });
+    const currentUser = await user.findOne({
+      where: { id: userId },
+      relations: ["cart"],
+    });
+    if (currentUser && currentItem) {
+      if (currentUser.cart.id !== currentItem.cart.id) {
+        return {
+          errors: [
+            {
+              field: "authorization",
+              message:
+                "you are not allowed to delete someone else's items from cart",
+            },
+          ],
+        };
+      }
+      await itemProduct.delete(currentItem);
+      const updatedUserCart = (await user.findOne({
+        where: { id: userId },
+        relations: ["cart", "cart.item_product", "cart.user"],
+      }))!.cart;
+      return { cart: updatedUserCart };
+    } else {
+      return {
+        errors: [
+          { field: "item", message: "item does not exist on your cart" },
+        ],
+      };
+    }
   }
 }

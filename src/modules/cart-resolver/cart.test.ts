@@ -27,6 +27,32 @@ const addToCartSchema = `mutation addToCart($args:AddToCartInput!){
     }
   }
 }`;
+const removeFromCartSchema = `mutation deleteFromCart($args:DeleteFromCartInput!){
+  deleteFromCart(args:$args){
+    cart{
+      id
+      total
+      item_product{
+          id
+          quantity
+          price
+          product{
+            name
+            description
+          }
+      }
+      user{
+        id
+        firstName
+        lastName
+      }
+    }
+    errors{
+      field
+      message
+    }
+  }
+}`;
 const addProductSchema = `mutation addProduct($args: AddProductInput!){
   addProduct(args:$args){
     product{
@@ -143,7 +169,38 @@ describe("adding items to cart", () => {
     expect(result3.data!.addToCart.cart.item_product).toHaveLength(3);
   });
 });
+describe("deleting items from cart", () => {
+  it("should not allow user to delete if user is not logged in", async () => {
+    const result = await gCall({
+      source: removeFromCartSchema,
+      variableValues: { args: { itemProductId: 2 } },
+    });
+    expect(result.errors![0].message).toBe(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+  });
+  it("should not be able to delete cart item if it is not in the current user's cart", async () => {
+    const result = await gCall({
+      source: removeFromCartSchema,
+      variableValues: { args: { itemProductId: 2 } },
+      userId: 1,
+    });
+    expect(result.data!.deleteFromCart.errors[0].field).toBe("authorization");
+  });
+  it("should delete item from cart", async () => {
+    const result = await gCall({
+      source: removeFromCartSchema,
+      variableValues: { args: { itemProductId: 2 } },
+      userId: 2,
+    });
 
+    expect(
+      result.data!.deleteFromCart.cart.item_product.filter(
+        (ip: any) => ip.id === 2
+      )
+    ).toHaveLength(0);
+  });
+});
 describe("getting user cart", () => {
   it("should not fetch user cart if user is unauthorized", () => {});
   it("should get the current user cart", () => {});
