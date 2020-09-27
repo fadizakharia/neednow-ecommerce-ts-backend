@@ -6,12 +6,12 @@ import { ItemProduct } from "../../Entity/ItemProduct";
 import { Product } from "../../Entity/Product";
 import { User } from "../../Entity/User";
 import { Context } from "../types/context";
-import { AddToCartInput } from "./addToCart/addToCart-input";
-import { AddToCartValidation } from "./addToCart/addToCart-validation";
+import { AddToCartInput } from "./addToCart/input";
+import { AddToCartValidation } from "./addToCart/validation";
 import { updateItemProductInput } from "./updateItemProduct/input";
 import { updateItemProductSchema } from "./updateItemProduct/validation";
-import { DeleteFromCartInput } from "./deleteFromCart/deleteFromCart-input";
-import { deleteFromCartSchema } from "./deleteFromCart/deleteFromCart-validation";
+import { DeleteFromCartInput } from "./deleteFromCart/input";
+import { deleteFromCartSchema } from "./deleteFromCart/validation";
 import { CartResponse } from "./response/CartResponse";
 
 @Resolver()

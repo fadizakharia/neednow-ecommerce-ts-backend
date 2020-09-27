@@ -1,14 +1,14 @@
 import { Resolver, Mutation, Arg, Ctx, Query, Authorized } from "type-graphql";
-import { RegInput } from "./signup/signup-input";
-import { SigninInput } from "./signin/SigninArgs";
+import { RegInput } from "./signup/input";
+import { SigninInput } from "./signin/input";
 import { Context } from "../types/context";
 import Argon from "argon2";
 import { getRepository } from "typeorm";
 import { User } from "../../Entity/User";
 import { Cart } from "../../Entity/Cart";
 import { UserResponse } from "./response/UserResponse";
-import { loginSchema } from "./signin/signinValidatorSchema";
-import { registrationSchema } from "./signup/signupValidatorSchema";
+import { loginSchema } from "./signin/validation";
+import { registrationSchema } from "./signup/validation";
 import { ValidationError } from "yup";
 @Resolver()
 export class UserResolver {

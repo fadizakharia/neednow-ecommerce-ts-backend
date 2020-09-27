@@ -2,10 +2,10 @@ import { Store } from "../../Entity/Store";
 import { User } from "../../Entity/User";
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Context } from "../types/context";
-import { AddStoreInput } from "./addstore/addstore-input";
+import { AddStoreInput } from "./addstore/input";
 import { StoreResponse } from "./response/StoreResponse";
 import { getRepository } from "typeorm";
-import { storeSchema } from "./addstore/addstore-validation-schema";
+import { storeSchema } from "./addstore/validation";
 import { ValidationError } from "yup";
 import { StoresResponse } from "./response/StoresResponse";
 @Resolver()
