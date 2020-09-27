@@ -8,6 +8,8 @@ import { User } from "../../Entity/User";
 import { Context } from "../types/context";
 import { AddToCartInput } from "./addToCart/addToCart-input";
 import { AddToCartValidation } from "./addToCart/addToCart-validation";
+import { updateItemProductInput } from "./updateItemProduct/input";
+import { updateItemProductSchema } from "./updateItemProduct/validation";
 import { DeleteFromCartInput } from "./deleteFromCart/deleteFromCart-input";
 import { deleteFromCartSchema } from "./deleteFromCart/deleteFromCart-validation";
 import { CartResponse } from "./response/CartResponse";
@@ -64,8 +66,6 @@ export class cartResolver {
       relations: ["user"],
     })) as Cart;
 
-    // console.log(userCart);
-
     if (currentProduct) {
       let createdItem: ItemProduct | undefined;
       createdItem = await itemProductRepository.findOne({
@@ -96,7 +96,7 @@ export class cartResolver {
           ],
         };
       }
-      // console.log(createdItem);
+
       userCart.total = +(
         userCart.total +
         args.quantity * currentProduct.price
@@ -172,6 +172,74 @@ export class cartResolver {
         errors: [
           { field: "item", message: "item does not exist on your cart" },
         ],
+      };
+    }
+  }
+  @Authorized()
+  @Mutation(() => CartResponse)
+  async updateItemProduct(
+    @Ctx() ctx: Context,
+    @Arg("args") args: updateItemProductInput
+  ): Promise<CartResponse> {
+    const userId = ctx.req.session!.userId;
+    const errors: { field: string; message: string }[] = [];
+
+    await updateItemProductSchema
+      .validate({ ...args }, { abortEarly: false })
+      .catch((e: ValidationError) => {
+        e.inner.forEach((err: any) => {
+          errors.push({ field: err.path, message: err.message });
+        });
+      });
+    if (errors.length > 0) {
+      return { errors };
+    }
+    const itemProduct = getRepository(ItemProduct);
+    const cart = getRepository(Cart);
+    const user = getRepository(User);
+    const currentItemProduct = await itemProduct.findOne({
+      where: { id: args.itemProductId },
+      relations: ["cart", "product", "cart.user"],
+    });
+    if (currentItemProduct) {
+      const currentUser = await user.findOne({ id: userId });
+      if (currentItemProduct.cart.user.id !== currentUser!.id) {
+        return {
+          errors: [
+            {
+              field: "authorization",
+              message:
+                "you are unauthorized to decrement someone else's item from cart",
+            },
+          ],
+        };
+      }
+      if (currentItemProduct.quantity === currentItemProduct.product.stock) {
+        return {
+          errors: [
+            {
+              field: "quantity",
+              message: "quantity can not be more than the store's stock",
+            },
+          ],
+        };
+      }
+      const previousItemPrice = currentItemProduct.price;
+      const baseCartTotal = currentItemProduct.cart.total - previousItemPrice;
+      currentItemProduct.quantity = args.quantity;
+      currentItemProduct.price =
+        currentItemProduct.product.price * args.quantity;
+      currentItemProduct.cart.total = baseCartTotal + currentItemProduct.price;
+      await itemProduct.save(currentItemProduct);
+      await cart.save(currentItemProduct.cart);
+      const updatedCart = await cart.findOne({
+        where: { id: currentItemProduct.cart.id },
+        relations: ["item_product", "user", "item_product.product"],
+      });
+      return { cart: updatedCart };
+    } else {
+      return {
+        errors: [{ field: "cartItem", message: "item does not exist in cart" }],
       };
     }
   }

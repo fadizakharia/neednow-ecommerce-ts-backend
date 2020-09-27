@@ -43,6 +43,29 @@ const addToCartSchema = `mutation addToCart($args:AddToCartInput!){
     }
   }
 }`;
+const updateFromCartSchema = `mutation updateItemProduct($args:updateItemProductInput!){
+  updateItemProduct(args:$args){
+  cart{
+    id
+    total
+    item_product{
+      id
+      quantity
+      price
+      product{
+        id
+        name
+        price
+      }
+    }
+   
+  } 
+  errors{
+      field
+      message
+    }
+}
+}`;
 const removeFromCartSchema = `mutation deleteFromCart($args:DeleteFromCartInput!){
   deleteFromCart(args:$args){
     cart{
@@ -217,6 +240,51 @@ describe("deleting items from cart", () => {
     ).toHaveLength(0);
   });
 });
+describe("updating cart", () => {
+  it("should not be able to update user cart item if user is unauthorized", async () => {
+    const result = await gCall({
+      source: updateFromCartSchema,
+      variableValues: { args: { itemProductId: 3, quantity: 2 } },
+    });
+    expect(result.errors![0].message).toBe(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+  });
+  it("should not be able to update user cart if arguements are invalid", async () => {
+    const result = await gCall({
+      source: updateFromCartSchema,
+      variableValues: { args: { itemProductId: -1, quantity: -1 } },
+      userId: 2,
+    });
+
+    expect(result.data!.updateItemProduct.errors[0].field).toBe(
+      "itemProductId"
+    );
+    expect(result.data!.updateItemProduct.errors[1].field).toBe("quantity");
+  });
+  it("should not be able to update user cart item if it belongs to different user", async () => {
+    const result = await gCall({
+      source: updateFromCartSchema,
+      variableValues: { args: { itemProductId: 3, quantity: 40 } },
+      userId: 1,
+    });
+    expect(result.data!.updateItemProduct.errors[0].field).toBe(
+      "authorization"
+    );
+  });
+  it("should update user cart item", async () => {
+    const result = await gCall({
+      source: updateFromCartSchema,
+      variableValues: { args: { itemProductId: 3, quantity: 10 } },
+      userId: 2,
+    });
+    expect(result.data!.updateItemProduct.cart.item_product[1].quantity).toBe(
+      10
+    );
+
+    expect(result.data!.updateItemProduct.errors).toBeNull();
+  });
+});
 describe("getting user cart", () => {
   it("should not fetch user cart if user is unauthorized", async () => {
     const result = await gCall({ source: getCartSchema });
@@ -226,8 +294,7 @@ describe("getting user cart", () => {
   });
   it("should get the current user cart", async () => {
     const result = await gCall({ source: getCartSchema, userId: 2 });
-    console.log(result.data!.getCart.cart);
-
     expect(result.data!.getCart.cart).not.toBeNull();
+    expect(result.data!.getCart.cart.item_product).toHaveLength(2);
   });
 });
