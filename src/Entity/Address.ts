@@ -1,6 +1,5 @@
 import { PrimaryGeneratedColumn, Column } from "typeorm";
 import { Field, ID, InterfaceType } from "type-graphql";
-import { IsOptional } from "class-validator";
 
 @InterfaceType()
 export abstract class Address {
@@ -8,26 +7,29 @@ export abstract class Address {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => Number, { nullable: true })
-  @Column("float8", { nullable: true })
+  @Field(() => Number)
+  @Column("float8")
   longitude: number;
 
-  @Field(() => Number, { nullable: true })
-  @Column("float8", { nullable: true })
+  @Field(() => Number)
+  @Column("float8")
   latitude: number;
 
   @Field(() => String)
   @Column("text")
   country: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column({ type: "text", nullable: true })
-  @IsOptional()
   state: string;
 
   @Field(() => String)
   @Column("text")
   city: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ type: "text", nullable: true })
+  postalCode: string;
 
   @Field(() => String)
   @Column("text")
@@ -35,6 +37,5 @@ export abstract class Address {
 
   @Field(() => String, { nullable: true })
   @Column("text", { nullable: true })
-  @IsOptional()
   address_line_2: string;
 }

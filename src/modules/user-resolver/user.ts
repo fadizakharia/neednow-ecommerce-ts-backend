@@ -1,6 +1,8 @@
 import { Resolver, Mutation, Arg, Ctx, Query, Authorized } from "type-graphql";
 import { RegInput } from "./signup/input";
 import { SigninInput } from "./signin/input";
+import { AddAddressInput } from "./addAddress/input";
+import { UpdateAddressSchema } from "./updateAddress/validation";
 import { Context } from "../types/context";
 import Argon from "argon2";
 import { getRepository } from "typeorm";
@@ -10,6 +12,10 @@ import { UserResponse } from "./response/UserResponse";
 import { loginSchema } from "./signin/validation";
 import { registrationSchema } from "./signup/validation";
 import { ValidationError } from "yup";
+import { UserAddress } from "../../Entity/UserAddress";
+import { addAddressSchema } from "./addAddress/validation";
+import { updateAddressInput } from "./updateAddress/input";
+import { UserAddressResponse } from "./response/AddressResponse";
 @Resolver()
 export class UserResolver {
   @Authorized()
@@ -96,6 +102,139 @@ export class UserResolver {
 
     return { user };
   }
+  @Authorized()
+  @Mutation(() => UserAddressResponse)
+  async addAddress(
+    @Ctx() ctx: Context,
+    @Arg("args") args: AddAddressInput
+  ): Promise<UserAddressResponse> {
+    const errors: { field: string; message: string }[] = [];
+    await addAddressSchema
+      .validate({ ...args }, { abortEarly: false })
+      .catch(function (err: ValidationError) {
+        err.inner.forEach((e: any) => {
+          errors.push({ field: e.path, message: e!.message });
+        });
+      });
+
+    if (errors.length > 0) {
+      return { errors };
+    }
+    const userId = ctx.req.session!.userId;
+    const user = getRepository(User);
+    const address = getRepository(UserAddress);
+    const currentUser = await user.findOne({ where: { id: userId } });
+    const userAddress = address.create({ ...args });
+    userAddress.user = currentUser!;
+    await address.save(userAddress);
+    const updatedUser = await user.findOne({
+      where: { id: userId },
+      relations: ["address"],
+    });
+    return { address: updatedUser!.address };
+  }
+
+  @Authorized()
+  @Query(() => UserAddressResponse)
+  async getAddresses(@Ctx() ctx: Context): Promise<UserAddressResponse> {
+    const userId = ctx.req.session!.userId;
+    const user = getRepository(User);
+    const currentUser = await user.findOne({
+      where: { id: userId },
+      relations: ["address"],
+    });
+    return { address: currentUser!.address };
+  }
+
+  @Authorized()
+  @Mutation(() => UserAddressResponse)
+  async deleteAddress(
+    @Ctx() ctx: Context,
+    @Arg("addressId") addressId: number
+  ): Promise<UserAddressResponse> {
+    if (addressId < 1) {
+      return {
+        errors: [{ field: "addressId", message: "addressId is invalid" }],
+      };
+    }
+    const userId = ctx.req.session!.userId;
+    const user = getRepository(User);
+    const address = getRepository(UserAddress);
+    const currentAddress = await address.findOne({
+      where: { id: addressId },
+      relations: ["user"],
+    });
+
+    if (!currentAddress) {
+      return {
+        errors: [{ field: "address", message: "address does not exist!" }],
+      };
+    }
+    if (currentAddress.user.id !== userId) {
+      return {
+        errors: [
+          {
+            field: "authorization",
+            message: "you are unauthorized to perfrom this task",
+          },
+        ],
+      };
+    }
+    await address.delete(currentAddress);
+    const currentUser = await user.findOne({
+      where: { id: userId },
+      relations: ["address"],
+    });
+    return { address: currentUser!.address };
+  }
+  @Authorized()
+  @Mutation(() => UserAddressResponse)
+  async updateAddress(
+    @Ctx() ctx: Context,
+    @Arg("args") args: updateAddressInput
+  ): Promise<UserAddressResponse> {
+    const errors: { field: string; message: string }[] = [];
+    UpdateAddressSchema.validate({ ...args }, { abortEarly: false }).catch(
+      function (err: ValidationError) {
+        err.inner.forEach((e: any) => {
+          errors.push({ field: e.path, message: e!.message });
+        });
+      }
+    );
+
+    if (errors.length > 0) {
+      return { errors };
+    }
+    const userId = ctx.req.session!.userId;
+    const user = getRepository(User);
+    const address = getRepository(UserAddress);
+    const currentAddress = await address.findOne({
+      where: { id: args.addressId },
+      relations: ["user"],
+    });
+    if (!currentAddress) {
+      return {
+        errors: [{ field: "address", message: "address does not exist" }],
+      };
+    }
+    if (currentAddress.user.id !== userId) {
+      return {
+        errors: [
+          {
+            field: "authorization",
+            message: "you are unauthorized to perfrom this task",
+          },
+        ],
+      };
+    }
+    await address.update(args.addressId, { ...args });
+    const currentUser = await user.findOne({
+      where: { id: userId },
+      relations: ["address"],
+    });
+    return { address: currentUser!.address };
+  }
+
   @Authorized()
   @Mutation()
   logout(@Ctx() context: Context): boolean {

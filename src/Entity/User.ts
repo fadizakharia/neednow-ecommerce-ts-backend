@@ -43,10 +43,9 @@ export class User {
   @OneToOne(() => UserPhoto, (uphoto) => uphoto.user)
   @JoinColumn()
   user_photo: UserPhoto;
-
-  @OneToOne(() => UserAddress, (address) => address.user)
-  @JoinColumn()
-  address: UserAddress;
+  @Field(() => [UserAddress])
+  @OneToMany(() => UserAddress, (address) => address.user)
+  address: UserAddress[];
 
   @OneToOne(() => Cart, (cart) => cart.user)
   cart: Cart;
