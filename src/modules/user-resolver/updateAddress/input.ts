@@ -5,27 +5,27 @@ export class updateAddressInput {
   @Field(() => Number)
   addressId: number;
 
-  @Field(() => Number, { nullable: true })
-  longitude: number;
-
-  @Field(() => Number, { nullable: true })
-  latitude: number;
+  @Field(() => String, { nullable: true })
+  longitude?: string;
 
   @Field(() => String, { nullable: true })
-  country: string;
+  latitude?: string;
 
   @Field(() => String, { nullable: true })
-  state: string;
+  country?: string;
 
   @Field(() => String, { nullable: true })
-  city: string;
+  state?: string;
 
   @Field(() => String, { nullable: true })
-  address_line_1: string;
+  city?: string;
 
   @Field(() => String, { nullable: true })
-  address_line_2: string;
+  address_line_1?: string;
 
   @Field(() => String, { nullable: true })
-  postalCode: string;
+  address_line_2?: string;
+
+  @Field(() => String, { nullable: true })
+  postalCode?: string;
 }

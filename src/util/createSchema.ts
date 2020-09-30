@@ -9,5 +9,6 @@ export const createSchema = async () => {
     authChecker: ({ context: { req } }) => {
       return !!req.session.userId;
     },
+    validate: false,
   });
 };

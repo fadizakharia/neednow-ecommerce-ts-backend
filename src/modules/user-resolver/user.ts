@@ -126,12 +126,12 @@ export class UserResolver {
     const currentUser = await user.findOne({ where: { id: userId } });
     const userAddress = address.create({ ...args });
     userAddress.user = currentUser!;
-    await address.save(userAddress);
-    const updatedUser = await user.findOne({
-      where: { id: userId },
-      relations: ["address"],
-    });
-    return { address: updatedUser!.address };
+    const savedAddress = await address.save(userAddress);
+    const addedAddress = (await address.findOne({
+      where: { id: savedAddress.id },
+      relations: ["user"],
+    })) as UserAddress;
+    return { address: addedAddress };
   }
 
   @Authorized()
@@ -141,9 +141,9 @@ export class UserResolver {
     const user = getRepository(User);
     const currentUser = await user.findOne({
       where: { id: userId },
-      relations: ["address"],
+      relations: ["address", "address.user"],
     });
-    return { address: currentUser!.address };
+    return { addresses: currentUser!.address };
   }
 
   @Authorized()
@@ -183,9 +183,9 @@ export class UserResolver {
     await address.delete(currentAddress);
     const currentUser = await user.findOne({
       where: { id: userId },
-      relations: ["address"],
+      relations: ["address", "address.user"],
     });
-    return { address: currentUser!.address };
+    return { addresses: currentUser!.address };
   }
   @Authorized()
   @Mutation(() => UserAddressResponse)
@@ -194,19 +194,26 @@ export class UserResolver {
     @Arg("args") args: updateAddressInput
   ): Promise<UserAddressResponse> {
     const errors: { field: string; message: string }[] = [];
-    UpdateAddressSchema.validate({ ...args }, { abortEarly: false }).catch(
-      function (err: ValidationError) {
-        err.inner.forEach((e: any) => {
-          errors.push({ field: e.path, message: e!.message });
-        });
-      }
-    );
+    await UpdateAddressSchema.validate(
+      { ...args },
+      { abortEarly: false }
+    ).catch(function (err: ValidationError) {
+      err.inner.forEach((e: any) => {
+        errors.push({ field: e.path, message: e!.message });
+      });
+    });
 
     if (errors.length > 0) {
       return { errors };
     }
+    let partialAddress = {};
+    for (const [key, value] of Object.entries(args)) {
+      if (value && key != "addressId") {
+        partialAddress = { ...partialAddress, [key]: value };
+      }
+    }
+
     const userId = ctx.req.session!.userId;
-    const user = getRepository(User);
     const address = getRepository(UserAddress);
     const currentAddress = await address.findOne({
       where: { id: args.addressId },
@@ -227,12 +234,16 @@ export class UserResolver {
         ],
       };
     }
-    await address.update(args.addressId, { ...args });
-    const currentUser = await user.findOne({
-      where: { id: userId },
-      relations: ["address"],
+
+    await address.update(
+      { id: args.addressId },
+      { id: args.addressId, ...partialAddress }
+    );
+    const updatedAddress = await address.findOne({
+      where: { id: args.addressId },
+      relations: ["user"],
     });
-    return { address: currentUser!.address };
+    return { address: updatedAddress };
   }
 
   @Authorized()

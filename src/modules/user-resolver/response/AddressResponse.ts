@@ -7,5 +7,7 @@ export class UserAddressResponse {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
   @Field(() => [UserAddress], { nullable: true })
-  address?: UserAddress[];
+  addresses?: UserAddress[];
+  @Field(() => UserAddress, { nullable: true })
+  address?: UserAddress;
 }

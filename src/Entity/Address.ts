@@ -1,19 +1,20 @@
 import { PrimaryGeneratedColumn, Column } from "typeorm";
-import { Field, ID, InterfaceType } from "type-graphql";
+import { Field, ID, InterfaceType, ObjectType } from "type-graphql";
 
 @InterfaceType()
+@ObjectType()
 export abstract class Address {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => Number)
-  @Column("float8")
-  longitude: number;
+  @Field(() => String)
+  @Column("text")
+  longitude: string;
 
-  @Field(() => Number)
-  @Column("float8")
-  latitude: number;
+  @Field(() => String)
+  @Column("text")
+  latitude: string;
 
   @Field(() => String)
   @Column("text")
