@@ -206,12 +206,7 @@ export class UserResolver {
     if (errors.length > 0) {
       return { errors };
     }
-    let partialAddress = {};
-    for (const [key, value] of Object.entries(args)) {
-      if (value && key != "addressId") {
-        partialAddress = { ...partialAddress, [key]: value };
-      }
-    }
+    const { addressId, ...partialAddress } = args;
 
     const userId = ctx.req.session!.userId;
     const address = getRepository(UserAddress);

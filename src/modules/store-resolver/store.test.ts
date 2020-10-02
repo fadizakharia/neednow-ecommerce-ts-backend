@@ -46,7 +46,42 @@ const getStoreSchema = `query getStore($storeId:Float!){
 const deleteStoreSchema = `mutation deleteStore($storeId:Float!){
   deleteStore(storeId:$storeId)
 }`;
-
+const addStoreAddressSchema = `mutation addStoreAddress($args:AddStoreAddressInput!){
+addStoreAddress(args:$args){
+  storeAddress{
+    id
+    latitude
+    longitude
+    city
+    state
+    address_line_1
+    address_line_2
+    country
+  }
+  errors{
+    field
+    message
+  }
+}
+}`;
+const updateStoreAddressSchema = `mutation updateStoreAddress($args:updateStoreAddressInput!){
+updateStoreAddress(args:$args){
+  storeAddress{
+    id
+    latitude
+    longitude
+    city
+    state
+    address_line_1
+    address_line_2
+    country
+  }
+  errors{
+    field
+    message
+  }
+}
+}`;
 beforeAll(async () => {
   await signup();
 });
@@ -91,6 +126,139 @@ describe("store", () => {
     expect(result.data!.addStore.errors).toHaveLength(2);
     expect(result.data!.addStore.errors[0].field).toEqual("storeName");
     expect(result.data!.addStore.errors[1].field).toEqual("storeDescription");
+  });
+});
+describe("addingStoreAddress", () => {
+  it("should not add a store address if user is not logged in", async () => {
+    const result = await gCall({
+      source: addStoreAddressSchema,
+      variableValues: {
+        args: {
+          storeId: 1,
+          latitude: "34.123",
+          longitude: "35.234",
+          country: "Lebanon",
+          city: "koura",
+          state: "North Lebanon",
+          address_line_1: "test street",
+          range: 10,
+        },
+      },
+    });
+    expect(result.errors![0].message).toBe(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+  });
+  it("should not add a store address if user does not own store", async () => {
+    const result = await gCall({
+      source: addStoreAddressSchema,
+      variableValues: {
+        args: {
+          storeId: 1,
+          latitude: "34.123",
+          longitude: "35.234",
+          country: "Lebanon",
+          city: "koura",
+          state: "North Lebanon",
+          address_line_1: "test street",
+          range: 10,
+        },
+      },
+      userId: 2,
+    });
+    expect(result.data!.addStoreAddress.errors[0].field).toBe("authorization");
+  });
+  it("should add a store address", async () => {
+    const result = await gCall({
+      source: addStoreAddressSchema,
+      variableValues: {
+        args: {
+          storeId: 1,
+          latitude: "34.123",
+          longitude: "35.234",
+          country: "Lebanon",
+          city: "koura",
+          state: "North Lebanon",
+          address_line_1: "test street",
+          range: 10,
+        },
+      },
+      userId: 1,
+    });
+    console.log(result);
+
+    expect(result.data!.addStoreAddress.storeAddress).not.toBeNull();
+  });
+});
+describe("updatingStoreAddress", () => {
+  it("should not update a store address if user is not logged in", async () => {
+    const result = await gCall({
+      source: updateStoreAddressSchema,
+      variableValues: {
+        args: {
+          storeId: 1,
+          latitude: "34.123",
+          longitude: "35.234",
+          country: "Lebanon",
+          city: "koura",
+          state: "North Lebanon",
+          address_line_1: "test street",
+          range: 10,
+        },
+      },
+    });
+
+    expect(result.errors![0].message).toBe(
+      "Access denied! You need to be authorized to perform this action!"
+    );
+    // expect(result.data!.addStoreAddress.storeAddress).not.toBeNull();
+  });
+  it("should not update a store address if user does not own store", async () => {
+    const result = await gCall({
+      source: updateStoreAddressSchema,
+      variableValues: {
+        args: {
+          storeId: 1,
+          latitude: "34.123",
+          longitude: "35.234",
+          country: "Lebanon",
+          city: "koura",
+          state: "North Lebanon",
+          address_line_1: "test street",
+          range: 10,
+        },
+      },
+      userId: 2,
+    });
+    expect(result.data!.updateStoreAddress.errors[0].field).toBe(
+      "authorization"
+    );
+  });
+  it("should update a store address", async () => {
+    const result = await gCall({
+      source: updateStoreAddressSchema,
+      variableValues: {
+        args: {
+          storeId: 1,
+          latitude: "32.12345",
+          longitude: "37.7652",
+          country: "Lebanon",
+          city: "koura",
+          state: "North Lebanon",
+          address_line_1: "test street",
+          range: 10,
+        },
+      },
+      userId: 1,
+    });
+    console.log(result);
+
+    expect(result.data!.updateStoreAddress.storeAddress.latitude).toBe(
+      "32.12345"
+    );
+    expect(result.data!.updateStoreAddress.storeAddress.longitude).toBe(
+      "37.7652"
+    );
   });
 });
 describe("fetching store", () => {

@@ -8,6 +8,12 @@ import { getRepository } from "typeorm";
 import { storeSchema } from "./addstore/validation";
 import { ValidationError } from "yup";
 import { StoresResponse } from "./response/StoresResponse";
+import { AddStoreAddressInput } from "./addStoreAddress/input";
+import { addStoreAddressSchema } from "./addStoreAddress/validation";
+import { StoreAddressResponse } from "./response/storeAddressResponse";
+import { StoreAddress } from "../../Entity/StoreAddress";
+import { updateStoreAddressInput } from "./updateStoreAddress/input";
+import { updateStoreAddressSchema } from "./updateStoreAddress/validation";
 @Resolver()
 export class StoreResolver {
   @Query(() => StoreResponse)
@@ -81,6 +87,94 @@ export class StoreResolver {
     }
   }
   @Authorized()
+  @Mutation(() => StoreAddressResponse)
+  async addStoreAddress(
+    @Ctx() ctx: Context,
+    @Arg("args") args: AddStoreAddressInput
+  ): Promise<StoreAddressResponse> {
+    const userId = ctx.req.session!.userId;
+
+    const error: { field: string; message: string }[] = [];
+    await addStoreAddressSchema
+      .validate({ ...args }, { abortEarly: false })
+      .catch(function (err: ValidationError) {
+        err.inner.forEach((e: any) => {
+          error.push({ field: e.path, message: e!.message });
+        });
+      });
+    if (error.length > 0) {
+      return { errors: error };
+    }
+    const store = getRepository(Store);
+    const currentStore = await store.findOne({
+      where: { id: args.storeId },
+      relations: ["user"],
+    });
+    if (!currentStore) {
+      return { errors: [{ field: "store", message: "store does not exist" }] };
+    }
+    if (currentStore!.user.id !== userId) {
+      return {
+        errors: [
+          {
+            field: "authorization",
+            message: "you are not authorized to access this store",
+          },
+        ],
+      };
+    }
+    const storeAddress = getRepository(StoreAddress);
+    const createdStore = storeAddress.create({ ...args });
+    createdStore.store = currentStore;
+    const savedAddress = await storeAddress.save(createdStore);
+    return { storeAddress: savedAddress };
+  }
+  @Authorized()
+  @Mutation(() => StoreAddressResponse)
+  async updateStoreAddress(
+    @Ctx() ctx: Context,
+    @Arg("args") args: updateStoreAddressInput
+  ): Promise<StoreAddressResponse> {
+    const userId = ctx.req.session!.userId;
+
+    const error: { field: string; message: string }[] = [];
+    await updateStoreAddressSchema
+      .validate({ ...args }, { abortEarly: false })
+      .catch(function (err: ValidationError) {
+        err.inner.forEach((e: any) => {
+          error.push({ field: e.path, message: e!.message });
+        });
+      });
+    if (error.length > 0) {
+      return { errors: error };
+    }
+    const store = getRepository(Store);
+    const currentStore = await store.findOne({
+      where: { id: args.storeId },
+      relations: ["user", "address"],
+    });
+    if (!currentStore) {
+      return { errors: [{ field: "store", message: "store does not exist" }] };
+    }
+    if (currentStore!.user.id !== userId) {
+      return {
+        errors: [
+          {
+            field: "authorization",
+            message: "you are not authorized to access this store",
+          },
+        ],
+      };
+    }
+    const { storeId, ...updateArguements } = args;
+    const storeAddress = getRepository(StoreAddress);
+    await storeAddress.update(currentStore.address.id, { ...updateArguements });
+    const updatedStoreAddress = await storeAddress.findOne({
+      where: { id: currentStore.address.id },
+    });
+    return { storeAddress: updatedStoreAddress };
+  }
+  @Authorized()
   @Mutation(() => Boolean)
   async deleteStore(
     @Ctx() ctx: Context,
@@ -88,13 +182,17 @@ export class StoreResolver {
   ): Promise<boolean> {
     const userId = ctx.req.session!.userId;
     const storeRepository = getRepository(Store);
-
+    const storeAddress = getRepository(StoreAddress);
     const store = await storeRepository.findOne({
       where: { id: storeId },
       relations: ["user"],
     });
     if (store) {
       if (store.user.id === userId) {
+        const currentStoreAddress = await storeAddress.findOne({
+          where: { store: store },
+        });
+        if (currentStoreAddress) await storeAddress.delete(currentStoreAddress);
         await storeRepository.delete(store);
         return true;
       }

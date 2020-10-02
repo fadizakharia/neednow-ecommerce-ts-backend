@@ -40,7 +40,7 @@ export class Store {
   @OneToMany(() => StoreOrder, (order) => order.store)
   order: Array<StoreOrder>;
 
+  @Field(() => StoreAddress)
   @OneToOne(() => StoreAddress, (address) => address.store)
-  @JoinColumn()
   address: StoreAddress;
 }
