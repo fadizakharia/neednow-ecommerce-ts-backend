@@ -4,19 +4,9 @@ import { countryNames } from "../../../util/country";
 export const addStoreAddressSchema = yup.object().shape({
   storeId: yup.number().min(1),
 
-  longitude: yup
-    .string()
-    .matches(
-      /^(\+|-)?((\d((\.)|\.\d{1,6})?)|(0*?\d\d((\.)|\.\d{1,6})?)|(0*?1[0-7]\d((\.)|\.\d{1,6})?)|(0*?180((\.)|\.0{1,6})?))$/,
-      "invalid longitude value"
-    ),
+  longitude: yup.number().min(-90).max(90),
 
-  latitude: yup
-    .string()
-    .matches(
-      /^(\+|-)?((\d((\.)|\.\d{1,6})?)|(0*?[0-8]\d((\.)|\.\d{1,6})?)|(0*?90((\.)|\.0{1,6})?))$/,
-      "invalid latitude value"
-    ),
+  latitude: yup.number().min(-180).max(180),
 
   country: yup.string().oneOf(countryNames),
 

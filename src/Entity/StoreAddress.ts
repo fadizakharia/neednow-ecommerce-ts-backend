@@ -7,7 +7,7 @@ import { Store } from "./Store";
 @ObjectType()
 export class StoreAddress extends Address {
   @Field(() => Store)
-  @OneToOne(() => Store, (store) => store.address)
+  @OneToOne(() => Store, (store) => store.address, { eager: true })
   @JoinColumn()
   store: Store;
   @Field(() => Number)

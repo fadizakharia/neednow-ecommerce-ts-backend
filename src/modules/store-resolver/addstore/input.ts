@@ -8,4 +8,8 @@ export class AddStoreInput implements Partial<Store> {
 
   @Field()
   storeDescription: string;
+  @Field()
+  type: string;
+  @Field(() => [String])
+  category: string[];
 }

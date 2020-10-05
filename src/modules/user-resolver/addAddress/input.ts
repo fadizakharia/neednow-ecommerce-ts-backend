@@ -2,11 +2,11 @@ import { Field, InputType } from "type-graphql";
 
 @InputType()
 export class AddAddressInput {
-  @Field(() => String)
-  longitude: string;
+  @Field(() => Number)
+  longitude: number;
 
-  @Field(() => String)
-  latitude: string;
+  @Field(() => Number)
+  latitude: number;
 
   @Field(() => String)
   country: string;

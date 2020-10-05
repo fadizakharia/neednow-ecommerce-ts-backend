@@ -5,11 +5,11 @@ export class updateAddressInput {
   @Field(() => Number)
   addressId: number;
 
-  @Field(() => String, { nullable: true })
-  longitude?: string;
+  @Field(() => Number, { nullable: true })
+  longitude?: number;
 
-  @Field(() => String, { nullable: true })
-  latitude?: string;
+  @Field(() => Number, { nullable: true })
+  latitude?: number;
 
   @Field(() => String, { nullable: true })
   country?: string;

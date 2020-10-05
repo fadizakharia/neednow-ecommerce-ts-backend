@@ -93,6 +93,8 @@ export const createStore = async () => {
         storeName: "the testing store",
         storeDescription:
           "store made by john doe and jane doe sells tests to everyone",
+        type: "Supermarket",
+        category: ["Electronics", "Convenience Goods"],
       },
     },
     userId: 1,
@@ -107,6 +109,8 @@ export const createSecondStore = async () => {
         storeName: "the testing store",
         storeDescription:
           "store made by john doe and jane doe sells tests to everyone",
+        type: "Supermarket",
+        category: ["Electronics", "Convenience Goods"],
       },
     },
     userId: 2,

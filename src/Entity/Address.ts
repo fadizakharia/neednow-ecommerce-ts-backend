@@ -8,13 +8,13 @@ export abstract class Address {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => String)
-  @Column("text")
-  longitude: string;
+  @Field(() => Number)
+  @Column("float8")
+  longitude: number;
 
-  @Field(() => String)
-  @Column("text")
-  latitude: string;
+  @Field(() => Number)
+  @Column("float8")
+  latitude: number;
 
   @Field(() => String)
   @Column("text")

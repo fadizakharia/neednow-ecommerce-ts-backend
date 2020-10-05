@@ -25,9 +25,16 @@ export class Store {
   @Field(() => String)
   @Column("text")
   storeDescription: string;
+  @Field(() => String)
+  @Column("text")
+  type: string;
+  @Field(() => [String])
+  @Column("text", { array: true })
+  category: Array<string>;
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.store)
   user: User;
+
   @Field(() => [Product])
   @OneToMany(() => Product, (product) => product.store)
   @JoinColumn()

@@ -241,8 +241,8 @@ describe("addAddress", () => {
       source: addAddressMutation,
       variableValues: {
         args: {
-          latitude: "30.346",
-          longitude: "-30.246",
+          latitude: 30.346,
+          longitude: -30.246,
           country: "lebanon",
           state: "koura",
           city: "kfar hazir",
@@ -260,8 +260,8 @@ describe("addAddress", () => {
       source: addAddressMutation,
       variableValues: {
         args: {
-          latitude: "-190",
-          longitude: "-190",
+          latitude: -190,
+          longitude: -190,
           country: "test",
           state: "",
           city: "",
@@ -278,8 +278,8 @@ describe("addAddress", () => {
       source: addAddressMutation,
       variableValues: {
         args: {
-          latitude: "30.3324",
-          longitude: "-30.3234",
+          latitude: 30.3324,
+          longitude: -30.3234,
           country: "Lebanon",
           city: "test city",
           address_line_1: "test address",
@@ -293,8 +293,8 @@ describe("addAddress", () => {
       source: addAddressMutation,
       variableValues: {
         args: {
-          latitude: "30.3324",
-          longitude: "-30.3234",
+          latitude: 30.3324,
+          longitude: -30.3234,
           country: "Lebanon",
           city: "test city",
           address_line_1: "test address",
@@ -311,8 +311,8 @@ describe("updateAddress", () => {
       variableValues: {
         args: {
           addressId: 1,
-          latitude: "30.3324",
-          longitude: "-30.3234",
+          latitude: 30.3324,
+          longitude: -30.3234,
           country: "Lebanon",
           city: "test city",
           address_line_1: "test address",
@@ -330,8 +330,8 @@ describe("updateAddress", () => {
       variableValues: {
         args: {
           addressId: 1,
-          latitude: "-190",
-          longitude: "-190",
+          latitude: -190,
+          longitude: -190,
           country: "test",
           city: "test city",
           address_line_1: "test address",
@@ -349,8 +349,8 @@ describe("updateAddress", () => {
       variableValues: {
         args: {
           addressId: 1,
-          latitude: "40.123",
-          longitude: "40.5423",
+          latitude: 40.123,
+          longitude: 40.5423,
           country: "Lebanon",
           city: "test city",
           address_line_1: "test address",

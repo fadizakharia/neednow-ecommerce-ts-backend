@@ -14,8 +14,91 @@ import { StoreAddressResponse } from "./response/storeAddressResponse";
 import { StoreAddress } from "../../Entity/StoreAddress";
 import { updateStoreAddressInput } from "./updateStoreAddress/input";
 import { updateStoreAddressSchema } from "./updateStoreAddress/validation";
+import { getNearbyStoresInput } from "./getNearbyStores/input";
+import { GetNearbyStoresSchema } from "./getNearbyStores/validation";
+const nearbyStoresQueryBuilder = async (
+  lat1: number,
+  lon1: number,
+  constraints: string = "",
+  page: number = 0
+) => {
+  const storeAddress = getRepository(StoreAddress);
+  const p = 0.017453292519943295;
+  return storeAddress.find({
+    join: { alias: "sa", leftJoin: { store: "sa.store" } },
+    where: `(12742 * ASIN(SQRT(0.5 - COS((${lat1} - sa.latitude)*${p}) / 2 + COS(sa.latitude * ${p}) * COS(${lat1} * ${p}) * (1-COS((${lon1}-sa.longitude)*${p})) / 2))) <= sa.range ${constraints}`,
+    take: 5,
+    skip: page * 5,
+    order: { range: "ASC" },
+  });
+};
 @Resolver()
 export class StoreResolver {
+  @Query(() => StoresResponse)
+  async getNearbyStores(
+    @Arg("args") args: getNearbyStoresInput
+  ): Promise<StoresResponse> {
+    const error: { field: string; message: string }[] = [];
+
+    await GetNearbyStoresSchema.validate(
+      { ...args },
+      { abortEarly: false }
+    ).catch(function (err: ValidationError) {
+      err.inner.forEach((e: any) => {
+        error.push({ field: e.path, message: e!.message });
+      });
+    });
+    if (error.length > 0) {
+      return { errors: error };
+    }
+    const nearbyStores: Store[] = [];
+    let nearbyStoreAddresses: StoreAddress[];
+
+    if (!args.type && !args.category) {
+      nearbyStoreAddresses = await nearbyStoresQueryBuilder(
+        args.latitude,
+        args.longitude,
+        `AND sa.country = '${args.country}'`,
+        args.page
+      );
+    } else if (args.type && !args.category) {
+      nearbyStoreAddresses = await nearbyStoresQueryBuilder(
+        args.latitude,
+        args.longitude,
+        `AND sa.country = '${args.country}' AND store.type = '${args.type}'`,
+        args.page
+      );
+    } else if (args.category && !args.type) {
+      nearbyStoreAddresses = await nearbyStoresQueryBuilder(
+        args.latitude,
+        args.longitude,
+        `AND sa.country = '${args.country}' AND '${args.category}' = ANY(store.category)`,
+        args.page
+      );
+    } else {
+      nearbyStoreAddresses = await nearbyStoresQueryBuilder(
+        args.latitude,
+        args.longitude,
+        `AND sa.country = '${args.country}' AND store.type = '${args.type}' AND '${args.category}' = ANY(store.category)`,
+        args.page
+      );
+    }
+
+    if (nearbyStoreAddresses.length <= 0) {
+      return {
+        errors: [{ field: "store", message: "no stores found matching query" }],
+      };
+    }
+
+    nearbyStoreAddresses.forEach((sa) => {
+      let formattedStore: any = { ...sa.store, address: sa };
+      delete formattedStore.address["store"];
+      nearbyStores.push(formattedStore);
+    });
+
+    return { stores: nearbyStores };
+  }
+
   @Query(() => StoreResponse)
   async getStore(@Arg("storeId") storeId: number): Promise<StoreResponse> {
     const storeRepository = getRepository(Store);
@@ -35,11 +118,13 @@ export class StoreResolver {
     const seller = user.findOne({ where: { id: userId } });
     const stores = await store.find({ where: { user: seller } });
     if (!(await seller)) {
-      return { error: { field: "id", message: "seller does not exist!" } };
+      return { errors: [{ field: "id", message: "seller does not exist!" }] };
     }
     if (stores.length === 0) {
       return {
-        error: { field: "stores", message: "seller does not have any stores!" },
+        errors: [
+          { field: "stores", message: "seller does not have any stores!" },
+        ],
       };
     }
     return { stores: stores };
@@ -200,3 +285,13 @@ export class StoreResolver {
     return false;
   }
 }
+//formula to be used to calculate nearby stores (also filter before by country)
+// SELECT name, range
+// FROM
+// ( SELECT name, ((ACOS(SIN(#{latitude} * PI() / 180) * SIN(u.latitude * PI() / 180) + COS(#{latitude} * PI() / 180) * COS(u.latitude * PI() / 180) * COS((#{longitude} - u.longitude) * PI() / 180)) * 180 / PI()) * 60 * 1.1515) as distance
+// FROM store u ) d
+// WHERE distance <= 5
+// ORDER BY distance ASC;
+/*
+
+*/

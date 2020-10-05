@@ -4,7 +4,7 @@ import { FieldError } from "../../../util/FieldError";
 @ObjectType()
 export class StoresResponse {
   @Field(() => [FieldError], { nullable: true })
-  error?: FieldError;
-  @Field(() => Store, { nullable: true })
+  errors?: FieldError[];
+  @Field(() => [Store], { nullable: true })
   stores?: Store[];
 }

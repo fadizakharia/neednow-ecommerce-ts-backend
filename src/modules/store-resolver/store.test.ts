@@ -64,6 +64,28 @@ addStoreAddress(args:$args){
   }
 }
 }`;
+const getNearbyStoresSchema = `query getNearbyStores($args:getNearbyStoresInput!){
+  getNearbyStores(args:$args){
+    stores{
+        id
+        storeName
+        storeDescription
+        type
+        category
+        address{
+          longitude
+          latitude
+          city
+          state
+          country
+      }
+    }
+    errors{
+      field
+      message
+    }
+  }
+}`;
 const updateStoreAddressSchema = `mutation updateStoreAddress($args:updateStoreAddressInput!){
 updateStoreAddress(args:$args){
   storeAddress{
@@ -104,6 +126,8 @@ describe("store", () => {
           storeName: "the testing store",
           storeDescription:
             "store made by john doe and jane doe sells tests to everyone",
+          type: "Supermarket",
+          category: ["Electronics", "Convenience Goods"],
         },
       },
     });
@@ -119,11 +143,13 @@ describe("store", () => {
         args: {
           storeName: "",
           storeDescription: "",
+          type: "Super",
+          category: ["Electr", "Convenience"],
         },
       },
       userId: 1,
     });
-    expect(result.data!.addStore.errors).toHaveLength(2);
+    expect(result.data!.addStore.errors).toHaveLength(5);
     expect(result.data!.addStore.errors[0].field).toEqual("storeName");
     expect(result.data!.addStore.errors[1].field).toEqual("storeDescription");
   });
@@ -135,8 +161,8 @@ describe("addingStoreAddress", () => {
       variableValues: {
         args: {
           storeId: 1,
-          latitude: "34.123",
-          longitude: "35.234",
+          latitude: 34.123,
+          longitude: 35.234,
           country: "Lebanon",
           city: "koura",
           state: "North Lebanon",
@@ -155,8 +181,8 @@ describe("addingStoreAddress", () => {
       variableValues: {
         args: {
           storeId: 1,
-          latitude: "34.123",
-          longitude: "35.234",
+          latitude: 34.123,
+          longitude: 35.234,
           country: "Lebanon",
           city: "koura",
           state: "North Lebanon",
@@ -174,8 +200,8 @@ describe("addingStoreAddress", () => {
       variableValues: {
         args: {
           storeId: 1,
-          latitude: "34.123",
-          longitude: "35.234",
+          latitude: 35.7813759,
+          longitude: 34.3135001,
           country: "Lebanon",
           city: "koura",
           state: "North Lebanon",
@@ -185,7 +211,6 @@ describe("addingStoreAddress", () => {
       },
       userId: 1,
     });
-    console.log(result);
 
     expect(result.data!.addStoreAddress.storeAddress).not.toBeNull();
   });
@@ -197,8 +222,8 @@ describe("updatingStoreAddress", () => {
       variableValues: {
         args: {
           storeId: 1,
-          latitude: "34.123",
-          longitude: "35.234",
+          latitude: 34.123,
+          longitude: 35.234,
           country: "Lebanon",
           city: "koura",
           state: "North Lebanon",
@@ -219,8 +244,8 @@ describe("updatingStoreAddress", () => {
       variableValues: {
         args: {
           storeId: 1,
-          latitude: "34.123",
-          longitude: "35.234",
+          latitude: 34.123,
+          longitude: 35.234,
           country: "Lebanon",
           city: "koura",
           state: "North Lebanon",
@@ -240,25 +265,85 @@ describe("updatingStoreAddress", () => {
       variableValues: {
         args: {
           storeId: 1,
-          latitude: "32.12345",
-          longitude: "37.7652",
+          latitude: 35.7752915,
+          longitude: 34.3134698,
           country: "Lebanon",
           city: "koura",
           state: "North Lebanon",
           address_line_1: "test street",
-          range: 10,
+          range: 2,
         },
       },
       userId: 1,
     });
-    console.log(result);
 
     expect(result.data!.updateStoreAddress.storeAddress.latitude).toBe(
-      "32.12345"
+      35.7752915
     );
     expect(result.data!.updateStoreAddress.storeAddress.longitude).toBe(
-      "37.7652"
+      34.3134698
     );
+  });
+});
+describe("fetching nearby stores", () => {
+  it("should fetch nearby stores", async () => {
+    const result = await gCall({
+      source: getNearbyStoresSchema,
+      variableValues: {
+        args: {
+          longitude: 34.313357,
+          latitude: 35.7877967,
+          country: "Lebanon",
+        },
+      },
+    });
+    expect(result.data!.getNearbyStores.stores).not.toBeNull();
+  });
+  it("should fetch nearby stores with type filter", async () => {
+    const result = await gCall({
+      source: getNearbyStoresSchema,
+      variableValues: {
+        args: {
+          longitude: 34.313357,
+          latitude: 35.7877967,
+          country: "Lebanon",
+          type: "Supermarket",
+        },
+      },
+    });
+
+    expect(result.data!.getNearbyStores.stores).not.toBeNull();
+  });
+  it("should fetch nearby stores with category filter", async () => {
+    const result = await gCall({
+      source: getNearbyStoresSchema,
+      variableValues: {
+        args: {
+          longitude: 34.313357,
+          latitude: 35.7877967,
+          country: "Lebanon",
+          category: "Convenience Goods",
+        },
+      },
+    });
+
+    expect(result.data!.getNearbyStores.stores).not.toBeNull();
+  });
+  it("should fetch nearby stores with both type and category filter", async () => {
+    const result = await gCall({
+      source: getNearbyStoresSchema,
+      variableValues: {
+        args: {
+          longitude: 34.313357,
+          latitude: 35.7877967,
+          country: "Lebanon",
+          type: "Supermarket",
+          category: "Convenience Goods",
+        },
+      },
+    });
+
+    expect(result.data!.getNearbyStores.stores).not.toBeNull();
   });
 });
 describe("fetching store", () => {
